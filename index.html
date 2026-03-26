@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SynaptoCAD | Precision Intervention Suite</title>
+    <title>SynaptoCAD | Universal Precision Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -12,7 +12,8 @@
         input[type=range] { accent-color: #3b82f6; cursor: pointer; height: 6px; border-radius: 5px; appearance: none; background: #334155; }
         input[type=range]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; background: #60a5fa; border-radius: 50%; border: 2px solid #fff; }
         .stat-card { background: #0f172a; border: 1px solid #1e293b; padding: 0.75rem; border-radius: 1rem; }
-        .moa-box { font-size: 0.65rem; line-height: 1.2; color: #64748b; margin-top: 0.5rem; font-style: italic; border-top: 1px solid #1e293b; pt-2 }
+        .moa-box { font-size: 0.65rem; line-height: 1.2; color: #94a3b8; margin-top: 0.5rem; border-top: 1px solid #1e293b; padding-top: 0.5rem; }
+        .layman { color: #60a5fa; font-weight: bold; margin-bottom: 2px; display: block; text-transform: uppercase; font-size: 0.6rem; }
         #moleculeRack::-webkit-scrollbar { width: 4px; }
         #moleculeRack::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
@@ -25,7 +26,7 @@
                 <div class="h-10 w-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center font-bold shadow-lg text-white">Σ</div>
                 <div>
                     <h1 class="font-black tracking-tight text-white italic leading-none text-xl">SYNAPTOCAD</h1>
-                    <p class="text-[9px] text-slate-500 font-bold tracking-widest uppercase">Precision Intervention Platform</p>
+                    <p class="text-[9px] text-slate-500 font-bold tracking-widest uppercase text-blue-500">v4.4 Bridge Edition</p>
                 </div>
             </div>
 
@@ -49,15 +50,13 @@
                     <span class="text-[8px] text-slate-500 font-bold mb-1 uppercase">Pathology Preset</span>
                     <select id="diseasePreset" onchange="applyDisease()" class="bg-transparent text-xs font-bold text-blue-400 outline-none cursor-pointer">
                         <option value="healthy">Healthy Baseline</option>
-                        <option value="alzheimers">Alzheimer's (Aβ/Tau)</option>
-                        <option value="stroke">Ischemic Stroke (Glutamate)</option>
-                        <option value="parkinsons">Parkinson's (α-Synuclein)</option>
-                        <option value="als">ALS (Mitochondrial ROS)</option>
-                        <option value="ms">Multiple Sclerosis (TNF-α/Autoimmune)</option>
-                        <option value="tbi">TBI (Neuroinflammation)</option>
-                        <option value="huntingtons">Huntington's (mHTT/Excitotoxicity)</option>
-                        <option value="epilepsy">Epilepsy (Glutamate Spike)</option>
-                        <option value="dementia">Vascular Dementia (Hypoxia/ROS)</option>
+                        <option value="alzheimers">Alzheimer's (Plaque/Tangles)</option>
+                        <option value="stroke">Ischemic Stroke (Brain Overload)</option>
+                        <option value="parkinsons">Parkinson's (Motor Stress)</option>
+                        <option value="als">ALS (Nerve Decay)</option>
+                        <option value="ms">Multiple Sclerosis (Autoimmune)</option>
+                        <option value="tbi">TBI (Brain Trauma)</option>
+                        <option value="huntingtons">Huntington's (Genetic Stress)</option>
                     </select>
                 </div>
             </div>
@@ -66,13 +65,13 @@
 
     <main class="p-6 grid grid-cols-12 gap-6 max-w-7xl mx-auto">
         
-        <div class="col-span-12 lg:col-span-4">
+        <div class="col-span-12 lg:col-span-4 h-full">
             <div class="bg-slate-900/50 p-5 rounded-3xl border border-slate-800 shadow-2xl h-full flex flex-col">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Intervention Matrix</h2>
                     <button onclick="addNewMolecule()" class="text-[9px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 hover:bg-blue-600 hover:text-white transition">+ NEW AGENT</button>
                 </div>
-                <div id="moleculeRack" class="space-y-4 overflow-y-auto pr-2 flex-grow">
+                <div id="moleculeRack" class="space-y-4 overflow-y-auto pr-2 flex-grow max-h-[70vh]">
                     </div>
             </div>
         </div>
@@ -82,21 +81,21 @@
                 <div class="flex justify-between items-center px-4 relative z-10">
                     <div id="node-Abeta" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">A-Beta</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-red-400">0.0</span>
                     </div>
                     <div id="node-Tau" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900 border-dashed">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">Tau</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-purple-400">0.0</span>
                     </div>
                     <div id="node-TNFa" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">TNF-α</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-orange-400">0.0</span>
                     </div>
                 </div>
 
                 <div class="flex justify-center relative">
                     <div id="node-Survival" class="node w-40 h-40 rounded-full border-4 border-slate-900 flex flex-col items-center justify-center bg-slate-950 shadow-2xl z-20">
-                        <span class="text-[8px] font-black text-slate-500 italic uppercase">Neural Health</span>
+                        <span class="text-[8px] font-black text-slate-500 italic uppercase">Neural Viability</span>
                         <span class="val font-mono text-4xl text-emerald-400">100%</span>
                     </div>
                 </div>
@@ -104,68 +103,88 @@
                 <div class="flex justify-between items-center px-4 relative z-10">
                     <div id="node-Glu" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">Glu</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-yellow-400">0.0</span>
                     </div>
                     <div id="node-Ach" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900 border-dotted">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">Ach</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-cyan-400">0.0</span>
                     </div>
                     <div id="node-BDNF" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">BDNF</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-blue-400">0.0</span>
                     </div>
                     <div id="node-ROS" class="node w-16 h-16 rounded-full flex flex-col items-center justify-center bg-slate-900">
                         <span class="text-[6px] text-slate-500 font-bold uppercase">ROS</span>
-                        <span class="val font-mono text-xs">0.0</span>
+                        <span class="val font-mono text-xs text-emerald-400">0.0</span>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-3 gap-3">
-                <div class="stat-card text-center"><span class="block text-[7px] text-slate-500 font-bold uppercase mb-1">Hepatic Tox</span><span id="toxVal" class="text-lg font-mono text-red-500">0.00</span></div>
-                <div class="stat-card text-center"><span class="block text-[7px] text-slate-500 font-bold uppercase mb-1">Bioavailability</span><span id="bioVal" class="text-lg font-mono text-blue-400">100%</span></div>
-                <div class="stat-card text-center"><span class="block text-[7px] text-slate-500 font-bold uppercase mb-1">Inflammation</span><span id="infVal" class="text-lg font-mono text-orange-500">0.00</span></div>
+                <div class="stat-card text-center"><span class="block text-[7px] text-slate-500 font-bold uppercase mb-1">Body Toxicity</span><span id="toxVal" class="text-lg font-mono text-red-500">0.00</span></div>
+                <div class="stat-card text-center"><span class="block text-[7px] text-slate-500 font-bold uppercase mb-1">Drug Uptake</span><span id="bioVal" class="text-lg font-mono text-blue-400">100%</span></div>
+                <div class="stat-card text-center"><span class="block text-[7px] text-slate-500 font-bold uppercase mb-1">Brain Swelling</span><span id="infVal" class="text-lg font-mono text-orange-500">0.00</span></div>
             </div>
         </div>
 
         <div class="col-span-12 lg:col-span-3 space-y-4">
             <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl h-56">
-                <h3 class="text-[9px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Viability Projection</h3>
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Health History</h3>
                 <div class="h-32"><canvas id="phenotypeChart"></canvas></div>
             </div>
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 h-[300px] overflow-y-auto font-mono text-[8px] text-emerald-500" id="terminal">
-                [SYSTEM]: Initializing Multimodal Simulation...
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 h-[300px] overflow-y-auto font-mono text-[8px] text-blue-400 shadow-inner" id="terminal">
+                [SYSTEM]: Simulation v4.4 Running...
             </div>
         </div>
     </main>
 
     <script>
         const MOA_DATABASE = {
-            TNFa: { inhibit: "Anti-TNF therapy: Sequesters circulating cytokines to prevent neural apoptosis.", activate: "Pro-inflammatory induction: Upregulates immune signaling." },
-            BDNF: { activate: "TrkB Agonist: Promotes neurite outgrowth and synaptic repair mechanisms.", inhibit: "Growth factor blockade: Decreases neural plasticity." },
-            Abeta: { inhibit: "BACE1 Inhibition: Clears amyloid monomers and prevents plaque nucleation.", activate: "Amyloidogenic push: Increases plaque formation rate." },
-            Glu: { inhibit: "NMDA Antagonist: Dampens calcium-mediated excitotoxic cell death pathways.", activate: "Glutamergic Agonist: Increases neuronal firing density." },
-            Tau: { inhibit: "Microtubule stabilizer: Prevents hyperphosphorylation and neurofibrillary tangles.", activate: "Tau aggregation promoter: Accelerates intracellular tangles." },
-            Ach: { activate: "Cholinesterase Inhibitor: Increases acetylcholine levels to improve cognitive signaling.", inhibit: "Anticholinergic effect: Suppresses synaptic transmission." },
-            ROS: { inhibit: "Mitochondrial Antioxidant: Neutralizes superoxide and hydroxyl radicals.", activate: "Oxidative stress promoter: Induces mitochondrial dysfunction." }
+            TNFa: { 
+                inhibit: { sci: "Monoclonal antibody: Neutralizes TNF-α cytokines to stop apoptosis.", simple: "Swelling Stopper: Calms down brain irritation." },
+                activate: { sci: "Cytokine induction: Upregulates pro-inflammatory signaling.", simple: "Alarm Trigger: Tells the immune system to attack." }
+            },
+            BDNF: { 
+                activate: { sci: "TrkB Agonist: Promotes neurite outgrowth and repair.", simple: "Brain Fertilizer: Helps grow and repair brain cells." },
+                inhibit: { sci: "Antagonist: Blocks essential growth factor signaling.", simple: "Growth Blocker: Stops cells from repairing themselves." }
+            },
+            Abeta: { 
+                inhibit: { sci: "BACE1 Inhibition: Clears amyloid monomers and prevents plaque.", simple: "Plaque Cleaner: Scrubs away the 'gunk' in Alzheimer's." },
+                activate: { sci: "Amyloidogenic push: Increases plaque formation rate.", simple: "Gunk Producer: Makes more brain-clogging plaque." }
+            },
+            Glu: { 
+                inhibit: { sci: "NMDA Antagonist: Prevents calcium-induced excitotoxicity.", simple: "Static Reducer: Stops brain cells from over-firing and dying." },
+                activate: { sci: "Glutamatergic Agonist: Increases neuronal firing density.", simple: "Spark Increaser: Makes brain cells fire faster." }
+            },
+            Tau: { 
+                inhibit: { sci: "Microtubule stabilizer: Prevents intracellular tangles.", simple: "Tangle Untier: Keeps the inside of cells from knotting up." },
+                activate: { sci: "Aggregation promoter: Accelerates intracellular tangles.", simple: "Knot Maker: Causes internal cell structural failure." }
+            },
+            Ach: { 
+                activate: { sci: "Cholinesterase Inhibitor: Increases cognitive signaling levels.", simple: "Memory Booster: Strengthens the signals used for thinking." },
+                inhibit: { sci: "Anticholinergic effect: Suppresses synaptic transmission.", simple: "Signal Muffer: Weakens the brain's communication lines." }
+            },
+            ROS: { 
+                inhibit: { sci: "Mitochondrial Antioxidant: Neutralizes free radicals.", simple: "Rust Protector: Protects cells from 'oxygen rust' (aging)." },
+                activate: { sci: "Oxidative stress promoter: Induces mitochondrial damage.", simple: "Cell Corroder: Speeds up cell damage and aging." }
+            }
         };
 
         let patient = { sex: 'M', age: 45, weight: 75 };
-        let state = { TNFa:0, Abeta:0, Tau:0, Glu:0, Ach:0.5, BDNF:0.6, ROS:0.05, Survival:1.0, Toxicity:0 };
+        let state = { TNFa:0, Abeta:0, Tau:0, Glu:0.1, Ach:0.7, BDNF:0.8, ROS:0.05, Survival:1.0, Toxicity:0 };
         let baseline = { ...state };
         let activeMolecules = [];
 
         const diseases = {
-            healthy: { TNFa:0.05, Abeta:0.02, Tau:0.01, Glu:0.1, Ach:0.7, BDNF:0.8, ROS:0.05, log: "Healthy baseline: Homeostatic equilibrium." },
-            alzheimers: { TNFa:0.6, Abeta:0.9, Tau:0.8, Glu:0.4, Ach:0.2, BDNF:0.3, ROS:0.5, log: "AD Protocol: Amyloid/Tau cascade detected." },
-            stroke: { TNFa:0.5, Abeta:0, Tau:0, Glu:0.95, Ach:0.3, BDNF:0.1, ROS:0.8, log: "Stroke Event: Massive Excitotoxicity/ROS flux." },
-            parkinsons: { TNFa:0.4, Abeta:0.1, Tau:0.2, Glu:0.4, Ach:0.4, BDNF:0.2, ROS:0.6, log: "PD Protocol: Alpha-Synuclein stress (ROS focus)." },
-            als: { TNFa:0.5, Abeta:0, Tau:0.1, Glu:0.75, Ach:0.3, BDNF:0.2, ROS:0.9, log: "ALS Protocol: Glutamate stress & Mitochondrial failure." },
-            ms: { TNFa:0.9, Abeta:0, Tau:0, Glu:0.3, Ach:0.5, BDNF:0.4, ROS:0.4, log: "MS Protocol: Focal autoimmune-driven inflammation." },
-            epilepsy: { TNFa:0.2, Abeta:0, Tau:0, Glu:1.0, Ach:0.8, BDNF:0.5, ROS:0.3, log: "Epilepsy: Synaptic hyper-excitation." }
+            healthy: { TNFa:0.05, Abeta:0.02, Tau:0.01, Glu:0.1, Ach:0.7, BDNF:0.8, ROS:0.05, log: "Healthy State: All systems stable." },
+            alzheimers: { TNFa:0.6, Abeta:0.9, Tau:0.8, Glu:0.4, Ach:0.2, BDNF:0.3, ROS:0.5, log: "Alzheimer's: High plaque and internal knots found." },
+            stroke: { TNFa:0.5, Abeta:0, Tau:0, Glu:0.95, Ach:0.3, BDNF:0.1, ROS:0.8, log: "Stroke: Massive electrical overload in the brain." },
+            parkinsons: { TNFa:0.4, Abeta:0.1, Tau:0.2, Glu:0.4, Ach:0.4, BDNF:0.2, ROS:0.6, log: "Parkinson's: Cell 'rusting' and movement stress." },
+            als: { TNFa:0.5, Abeta:0, Tau:0.1, Glu:0.75, Ach:0.3, BDNF:0.2, ROS:0.9, log: "ALS: Nerve power plants (mitochondria) failing." },
+            ms: { TNFa:0.9, Abeta:0, Tau:0, Glu:0.3, Ach:0.5, BDNF:0.4, ROS:0.4, log: "MS: Immune system is attacking the brain's wires." },
+            tbi: { TNFa:0.95, Abeta:0.1, Tau:0.3, Glu:0.6, Ach:0.2, BDNF:0.4, ROS:0.7, log: "TBI: Severe physical impact and swelling." }
         };
 
-        // --- CHART ---
         const ctx = document.getElementById('phenotypeChart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
@@ -191,7 +210,6 @@
         function runSimulation() {
             let clearance = Math.max(0.4, 1.2 - (patient.age * 0.01));
             let bio = (75 / patient.weight) * (patient.sex === 'F' ? 0.95 : 1.0);
-            
             let tempState = { ...baseline };
             let totalTox = 0;
 
@@ -236,33 +254,36 @@
                         <button onclick="activeMolecules.splice(${i},1); renderRack(); runSimulation();" class="text-slate-600 hover:text-red-500 text-xs font-bold">✕</button>
                     </div>
                     <div class="flex gap-2 mb-3">
-                        <select onchange="activeMolecules[${i}].target=this.value; renderRack(); runSimulation()" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 outline-none w-full">
+                        <select onchange="activeMolecules[${i}].target=this.value; renderRack(); runSimulation()" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 outline-none w-full text-slate-300">
                             ${Object.keys(MOA_DATABASE).map(k => `<option value="${k}" ${m.target === k ? 'selected' : ''}>Target: ${k}</option>`).join('')}
                         </select>
-                        <select onchange="activeMolecules[${i}].mechanism=this.value; renderRack(); runSimulation()" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 outline-none w-full">
+                        <select onchange="activeMolecules[${i}].mechanism=this.value; renderRack(); runSimulation()" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 outline-none w-full text-slate-300">
                             <option value="inhibit" ${m.mechanism === 'inhibit' ? 'selected' : ''}>Inhibit</option>
                             <option value="activate" ${m.mechanism === 'activate' ? 'selected' : ''}>Agonist</option>
                         </select>
                     </div>
                     <div class="flex justify-between items-center mb-1">
-                        <span class="text-[9px] font-bold text-slate-500 uppercase">Dosage Amount</span>
+                        <span class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Dose Intensity</span>
                         <span class="text-blue-400 font-mono text-[10px] bg-blue-400/10 px-2 rounded-full border border-blue-400/20">${(m.dose * 100).toFixed(0)} mg/kg</span>
                     </div>
                     <input type="range" min="0" max="2" step="0.01" value="${m.dose}" oninput="activeMolecules[${i}].dose=parseFloat(this.value); runSimulation(); this.previousElementSibling.children[1].innerText=(this.value*100).toFixed(0)+' mg/kg';" class="w-full">
-                    <div class="moa-box">${MOA_DATABASE[m.target][m.mechanism]}</div>
+                    <div class="moa-box">
+                        <span class="layman">Simple View: ${MOA_DATABASE[m.target][m.mechanism].simple}</span>
+                        <p class="opacity-70">${MOA_DATABASE[m.target][m.mechanism].sci}</p>
+                    </div>
                 </div>
             `).join('');
         }
 
         function addNewMolecule() {
-            activeMolecules.push({ id: Date.now(), name: "NME-0" + (activeMolecules.length+1), target: "TNFa", mechanism: "inhibit", dose: 0.0 });
+            activeMolecules.push({ id: Date.now(), name: "New Discovery", target: "TNFa", mechanism: "inhibit", dose: 0.0 });
             renderRack();
         }
 
         function applyDisease() {
             const d = document.getElementById('diseasePreset').value;
             baseline = { ...diseases[d] };
-            log(`[PROTOCOL]: Switching to ${d.toUpperCase()}. Baseline normalized.`);
+            log(`[BRIDGE]: Loading ${d.toUpperCase()} context...`);
             runSimulation();
         }
 

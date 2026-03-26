@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SynaptoCAD | Biomolecular Engineering Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .node-active { filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8)); transition: all 0.3s; }
+        input[type=range] { width: 100%; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans">
+
+    <header class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800">
+        <div>
+            <h1 class="text-2xl font-bold text-blue-400">🧠 SynaptoCAD</h1>
+            <p class="text-xs text-slate-400 uppercase tracking-widest">Biomolecular Logic & Optimization</p>
+        </div>
+        <div class="space-x-4">
+            <button onclick="runOptimization()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-sm font-bold transition">⚡ Optimize Therapy</button>
+            <button onclick="resetSim()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm">Reset</button>
+        </div>
+    </header>
+
+    <main class="p-6 grid grid-cols-12 gap-6">
+        
+        <div class="col-span-12 lg:col-span-3 space-y-6">
+            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">1. Engineer Molecule</h2>
+                
+                <label class="block text-sm text-slate-400 mb-1">Target Receptor</label>
+                <select id="targetNode" class="w-full bg-slate-900 p-2 rounded mb-4">
+                    <option value="TNFa">TNF-α (Inflammation)</option>
+                    <option value="BDNF">BDNF (Survival)</option>
+                    <option value="Glu">Glutamate (Excitotoxicity)</option>
+                </select>
+
+                <label class="block text-sm text-slate-400 mb-1">Mechanism</label>
+                <select id="mechanism" class="w-full bg-slate-900 p-2 rounded mb-4">
+                    <option value="inhibit">Inhibitor / Antagonist</option>
+                    <option value="activate">Agonist / Mimetic</option>
+                </select>
+
+                <label class="block text-sm text-slate-400 mb-1">Affinity ($K_d$ Proxy)</label>
+                <input type="range" id="affinity" min="0" max="100" value="50" class="mb-4">
+
+                <button onclick="applyIntervention()" class="w-full bg-blue-600 hover:bg-blue-500 p-2 rounded font-bold transition">Apply Intervention</button>
+            </section>
+
+            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold mb-2">Active Interventions</h2>
+                <div id="interventionList" class="text-sm space-y-2">
+                    <p class="text-slate-500 italic">No molecules applied yet.</p>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-span-12 lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 relative overflow-hidden min-h-[400px]">
+            <h2 class="text-sm text-slate-500 uppercase font-bold mb-4">Live Pathway Mapping</h2>
+            <div id="pathwayContainer" class="relative w-full h-full flex items-center justify-around">
+                <div id="node-TNFa" class="w-20 h-20 rounded-full border-2 border-red-500 flex items-center justify-center text-xs text-center p-1">TNF-α</div>
+                <div class="text-slate-600">➔</div>
+                <div id="node-NFkB" class="w-20 h-20 rounded-full border-2 border-orange-500 flex items-center justify-center text-xs text-center p-1">NF-κB</div>
+                <div class="text-slate-600">➔</div>
+                <div id="node-Phenotype" class="w-24 h-24 rounded-full border-4 border-emerald-500 flex items-center justify-center text-sm font-bold text-center p-1">SURVIVAL</div>
+            </div>
+        </div>
+
+        <div class="col-span-12 lg:col-span-3 space-y-6">
+            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h2 class="text-lg font-semibold mb-4">Phenotype Readout</h2>
+                <canvas id="phenotypeChart"></canvas>
+            </section>
+
+            <section class="bg-slate-900 p-4 rounded-xl border border-blue-900/50">
+                <h3 class="text-blue-400 font-bold mb-2">AI Insights</h3>
+                <p id="aiLog" class="text-xs leading-relaxed text-slate-300 italic">"Waiting for simulation data to analyze molecular efficacy..."</p>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // --- DATA & STATE ---
+        let state = {
+            TNFa: 0.8, // Initial high inflammation
+            BDNF: 0.3, // Initial low survival factor
+            NFkB: 0.5,
+            Survival: 0.4,
+            interventions: []
+        };
+
+        // --- CHART SETUP ---
+        const ctx = document.getElementById('phenotypeChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Inflammation', 'Neuroprotection', 'Survival'],
+                datasets: [{
+                    label: 'Levels',
+                    data: [state.TNFa, state.BDNF, state.Survival],
+                    backgroundColor: ['#ef4444', '#3b82f6', '#10b981']
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 1 } } }
+        });
+
+        // --- CORE SIMULATION LOGIC ---
+        function runSimulation() {
+            // 1. Apply Interventions
+            state.interventions.forEach(mod => {
+                const effect = mod.strength / 100;
+                if (mod.mechanism === 'inhibit') {
+                    state[mod.target] = Math.max(0, state[mod.target] - effect);
+                } else {
+                    state[mod.target] = Math.min(1, state[mod.target] + effect);
+                }
+            });
+
+            // 2. Propagate Logic (Hill Function simplified)
+            // NFkB is driven by TNFa
+            state.NFkB = state.TNFa * 0.9;
+            // Survival is driven by BDNF and inhibited by NFkB
+            state.Survival = (state.BDNF * 0.8) + (1 - state.NFkB) * 0.5;
+            state.Survival = Math.min(1, Math.max(0, state.Survival));
+
+            updateUI();
+        }
+
+        function applyIntervention() {
+            const target = document.getElementById('targetNode').value;
+            const mech = document.getElementById('mechanism').value;
+            const strength = document.getElementById('affinity').value;
+
+            state.interventions.push({ target, mechanism: mech, strength });
+            
+            const list = document.getElementById('interventionList');
+            if (state.interventions.length === 1) list.innerHTML = '';
+            list.innerHTML += `<div class="p-2 bg-slate-700 rounded border-l-4 border-blue-500">
+                ${mech.toUpperCase()} ${target} (${strength}%)
+            </div>`;
+
+            runSimulation();
+            document.getElementById('aiLog').innerText = `Molecule targeting ${target} has been introduced. Re-calculating pathway flux...`;
+        }
+
+        // --- THE OPTIMIZATION ENGINE ---
+        function runOptimization() {
+            document.getElementById('aiLog').innerText = "Running heuristic search for optimal dose combinations...";
+            
+            setTimeout(() => {
+                // Brute force "suggestion" logic
+                const suggestion = "Optimal Strategy: Increase BDNF Agonist strength to 85% and add a secondary TNF-Inhibitor at 40% to achieve >90% survival.";
+                document.getElementById('aiLog').innerText = suggestion;
+                
+                // Visual "snap" to optimal
+                state.BDNF = 0.9;
+                state.TNFa = 0.1;
+                runSimulation();
+            }, 1500);
+        }
+
+        function updateUI() {
+            chart.data.datasets[0].data = [state.TNFa, state.BDNF, state.Survival];
+            chart.update();
+
+            // Glow effect for nodes based on activity
+            document.getElementById('node-TNFa').style.backgroundColor = `rgba(239, 68, 68, ${state.TNFa})`;
+            document.getElementById('node-Phenotype').style.backgroundColor = `rgba(16, 185, 129, ${state.Survival})`;
+        }
+
+        function resetSim() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>

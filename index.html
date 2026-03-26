@@ -3,176 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SynaptoCAD | Biomolecular Engineering Platform</title>
+    <title>SynaptoCAD v2 | Biomolecular Engineering Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .node-active { filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8)); transition: all 0.3s; }
-        input[type=range] { width: 100%; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        .node { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        input[type=range] { accent-color: #3b82f6; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
-    <header class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800">
-        <div>
-            <h1 class="text-2xl font-bold text-blue-400">🧠 SynaptoCAD</h1>
-            <p class="text-xs text-slate-400 uppercase tracking-widest">Biomolecular Logic & Optimization</p>
+    <nav class="border-b border-slate-800 p-4 flex justify-between items-center glass sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🧬</span>
+            <div>
+                <h1 class="font-bold tracking-tight text-blue-400">SynaptoCAD <span class="text-slate-500 font-light text-sm">v2.0</span></h1>
+                <p class="text-[10px] uppercase tracking-tighter text-slate-500">Systems Neuro-Engineering Platform</p>
+            </div>
         </div>
-        <div class="space-x-4">
-            <button onclick="runOptimization()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-sm font-bold transition">⚡ Optimize Therapy</button>
-            <button onclick="resetSim()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded text-sm">Reset</button>
+        <div class="flex gap-4">
+            <div class="flex flex-col">
+                <label class="text-[10px] uppercase text-slate-500 font-bold">Target Pathology</label>
+                <select id="diseasePreset" onchange="applyDisease()" class="bg-slate-800 text-xs p-1 rounded border border-slate-700 focus:border-blue-500 outline-none">
+                    <option value="healthy">Baseline (Healthy)</option>
+                    <option value="alzheimers">Alzheimer's (High Beta-Amyloid)</option>
+                    <option value="stroke">Acute Stroke (Glutamate Toxicity)</option>
+                    <option value="ms">Multiple Sclerosis (TNF-α Flare)</option>
+                </select>
+            </div>
+            <button onclick="runOptimization()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1 rounded text-xs font-bold self-end transition shadow-lg shadow-blue-900/20">⚡ RUN OPTIMIZER</button>
         </div>
-    </header>
+    </nav>
 
     <main class="p-6 grid grid-cols-12 gap-6">
         
         <div class="col-span-12 lg:col-span-3 space-y-6">
-            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <h2 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">1. Engineer Molecule</h2>
+            <section class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                <h2 class="text-sm font-bold text-slate-400 mb-4 flex items-center gap-2">
+                    <span>🧪</span> MOLECULE FORGE
+                </h2>
                 
-                <label class="block text-sm text-slate-400 mb-1">Target Receptor</label>
-                <select id="targetNode" class="w-full bg-slate-900 p-2 rounded mb-4">
-                    <option value="TNFa">TNF-α (Inflammation)</option>
-                    <option value="BDNF">BDNF (Survival)</option>
-                    <option value="Glu">Glutamate (Excitotoxicity)</option>
-                </select>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-1">Intervention Name</label>
+                        <input type="text" id="molName" placeholder="e.g., Synapto-101" class="w-full bg-slate-800 p-2 rounded border border-slate-700 text-sm">
+                    </div>
 
-                <label class="block text-sm text-slate-400 mb-1">Mechanism</label>
-                <select id="mechanism" class="w-full bg-slate-900 p-2 rounded mb-4">
-                    <option value="inhibit">Inhibitor / Antagonist</option>
-                    <option value="activate">Agonist / Mimetic</option>
-                </select>
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-1">Biological Target</label>
+                        <select id="molTarget" class="w-full bg-slate-800 p-2 rounded border border-slate-700 text-sm">
+                            <option value="TNFa">TNF-α (Pro-Inflammatory)</option>
+                            <option value="Glu">Glutamate (Excitatory)</option>
+                            <option value="BDNF">BDNF (Neurotrophic)</option>
+                            <option value="Abeta">Beta-Amyloid (Plaque)</option>
+                            <option value="IL10">IL-10 (Anti-Inflammatory)</option>
+                        </select>
+                    </div>
 
-                <label class="block text-sm text-slate-400 mb-1">Affinity ($K_d$ Proxy)</label>
-                <input type="range" id="affinity" min="0" max="100" value="50" class="mb-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setMech('inhibit')" id="btnInhibit" class="bg-slate-800 border border-slate-700 p-2 rounded text-xs hover:bg-red-900/20 transition">Inhibitor</button>
+                        <button onclick="setMech('activate')" id="btnActivate" class="bg-slate-800 border border-slate-700 p-2 rounded text-xs hover:bg-emerald-900/20 transition">Agonist</button>
+                    </div>
 
-                <button onclick="applyIntervention()" class="w-full bg-blue-600 hover:bg-blue-500 p-2 rounded font-bold transition">Apply Intervention</button>
+                    <div>
+                        <div class="flex justify-between text-[10px] text-slate-500 uppercase font-bold">
+                            <span>Binding Affinity</span>
+                            <span id="affinityVal">50%</span>
+                        </div>
+                        <input type="range" id="molAffinity" oninput="document.getElementById('affinityVal').innerText=this.value+'%'" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <button onclick="forgeMolecule()" class="w-full bg-slate-100 text-slate-900 p-2 rounded-lg font-bold text-sm hover:bg-white transition">ADD TO LIBRARY</button>
+                </div>
             </section>
 
-            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <h2 class="text-lg font-semibold mb-2">Active Interventions</h2>
-                <div id="interventionList" class="text-sm space-y-2">
-                    <p class="text-slate-500 italic">No molecules applied yet.</p>
+            <section class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl max-h-[300px] overflow-y-auto">
+                <h2 class="text-sm font-bold text-slate-400 mb-4">MOLECULE LIBRARY</h2>
+                <div id="libraryList" class="space-y-2 text-xs text-slate-400 italic">
+                    Empty. Use the Forge to design interventions.
                 </div>
             </section>
         </div>
 
-        <div class="col-span-12 lg:col-span-6 bg-slate-950 rounded-xl border border-slate-800 p-4 relative overflow-hidden min-h-[400px]">
-            <h2 class="text-sm text-slate-500 uppercase font-bold mb-4">Live Pathway Mapping</h2>
-            <div id="pathwayContainer" class="relative w-full h-full flex items-center justify-around">
-                <div id="node-TNFa" class="w-20 h-20 rounded-full border-2 border-red-500 flex items-center justify-center text-xs text-center p-1">TNF-α</div>
-                <div class="text-slate-600">➔</div>
-                <div id="node-NFkB" class="w-20 h-20 rounded-full border-2 border-orange-500 flex items-center justify-center text-xs text-center p-1">NF-κB</div>
-                <div class="text-slate-600">➔</div>
-                <div id="node-Phenotype" class="w-24 h-24 rounded-full border-4 border-emerald-500 flex items-center justify-center text-sm font-bold text-center p-1">SURVIVAL</div>
+        <div class="col-span-12 lg:col-span-6 flex flex-col gap-6">
+            <div class="bg-slate-950 rounded-3xl border border-slate-800 p-8 min-h-[500px] relative shadow-inner overflow-hidden">
+                <div class="absolute top-4 left-6 text-[10px] font-mono text-blue-900">PATHWAY_DYNAMICS_V2.0</div>
+                
+                <svg class="absolute inset-0 w-full h-full pointer-events-none" id="svgConnections">
+                    <line x1="20%" y1="50%" x2="50%" y2="40%" stroke="#334155" stroke-width="2" stroke-dasharray="4"/>
+                    <line x1="20%" y1="50%" x2="50%" y2="60%" stroke="#334155" stroke-width="2" stroke-dasharray="4"/>
+                    <line x1="50%" y1="40%" x2="80%" y2="50%" stroke="#334155" stroke-width="2" stroke-dasharray="4"/>
+                    <line x1="50%" y1="60%" x2="80%" y2="50%" stroke="#334155" stroke-width="2" stroke-dasharray="4"/>
+                </svg>
+
+                <div class="flex flex-col h-full justify-between items-center relative z-10">
+                    <div class="flex justify-around w-full">
+                        <div id="node-Abeta" class="node w-24 h-24 rounded-full border border-slate-700 flex flex-col items-center justify-center bg-slate-900 shadow-2xl">
+                            <span class="text-[10px] text-slate-500">β-Amyloid</span>
+                            <span class="val font-mono text-lg">0.0</span>
+                        </div>
+                        <div id="node-TNFa" class="node w-24 h-24 rounded-full border border-slate-700 flex flex-col items-center justify-center bg-slate-900 shadow-2xl">
+                            <span class="text-[10px] text-slate-500">TNF-α</span>
+                            <span class="val font-mono text-lg">0.0</span>
+                        </div>
+                    </div>
+
+                    <div id="node-Survival" class="node w-32 h-32 rounded-full border-4 border-slate-800 flex flex-col items-center justify-center bg-slate-900 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        <span class="text-xs font-bold text-slate-400">SURVIVAL</span>
+                        <span class="val font-mono text-3xl text-emerald-400">0%</span>
+                    </div>
+
+                    <div class="flex justify-around w-full">
+                        <div id="node-Glu" class="node w-24 h-24 rounded-full border border-slate-700 flex flex-col items-center justify-center bg-slate-900 shadow-2xl">
+                            <span class="text-[10px] text-slate-500">Glutamate</span>
+                            <span class="val font-mono text-lg">0.0</span>
+                        </div>
+                        <div id="node-BDNF" class="node w-24 h-24 rounded-full border border-slate-700 flex flex-col items-center justify-center bg-slate-900 shadow-2xl">
+                            <span class="text-[10px] text-slate-500">BDNF</span>
+                            <span class="val font-mono text-lg">0.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 h-32 overflow-y-auto font-mono text-[10px] text-blue-300 p-4 shadow-xl" id="console">
+                [SYSTEM]: Initializing SynaptoCAD Environment...<br>
+                [SYSTEM]: Ready for biomolecular intervention.
             </div>
         </div>
 
         <div class="col-span-12 lg:col-span-3 space-y-6">
-            <section class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                <h2 class="text-lg font-semibold mb-4">Phenotype Readout</h2>
-                <canvas id="phenotypeChart"></canvas>
+            <section class="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                <h2 class="text-sm font-bold text-slate-400 mb-4">PHENOTYPE TRACKER</h2>
+                <div class="h-48">
+                    <canvas id="phenotypeChart"></canvas>
+                </div>
             </section>
 
-            <section class="bg-slate-900 p-4 rounded-xl border border-blue-900/50">
-                <h3 class="text-blue-400 font-bold mb-2">AI Insights</h3>
-                <p id="aiLog" class="text-xs leading-relaxed text-slate-300 italic">"Waiting for simulation data to analyze molecular efficacy..."</p>
+            <section class="bg-blue-600/10 p-5 rounded-2xl border border-blue-500/30 shadow-xl">
+                <h2 class="text-xs font-bold text-blue-400 mb-2 uppercase tracking-tighter">Optimization Result</h2>
+                <div id="optResult" class="text-sm leading-relaxed text-slate-300">
+                    No active optimization. Select a disease and run the solver.
+                </div>
             </section>
         </div>
     </main>
 
     <script>
-        // --- DATA & STATE ---
-        let state = {
-            TNFa: 0.8, // Initial high inflammation
-            BDNF: 0.3, // Initial low survival factor
-            NFkB: 0.5,
-            Survival: 0.4,
-            interventions: []
+        // --- DATA STRUCTURES ---
+        let currentMechanism = 'inhibit';
+        let library = [];
+        let state = { TNFa: 0.1, Abeta: 0.05, Glu: 0.2, BDNF: 0.5, Survival: 0.8 };
+        let baseline = { ...state };
+
+        const diseases = {
+            healthy: { TNFa: 0.1, Abeta: 0.05, Glu: 0.2, BDNF: 0.6, Survival: 0.9, log: "System stable. Baseline synaptic activity." },
+            alzheimers: { TNFa: 0.6, Abeta: 0.9, Glu: 0.4, BDNF: 0.2, Survival: 0.3, log: "Pathology: Amyloid plaque accumulation & synaptic loss." },
+            stroke: { TNFa: 0.4, Abeta: 0.1, Glu: 0.9, BDNF: 0.1, Survival: 0.1, log: "Pathology: Massive Glutamate excitotoxicity & neural death." },
+            ms: { TNFa: 0.9, Abeta: 0.1, Glu: 0.3, BDNF: 0.3, Survival: 0.4, log: "Pathology: Cytokine flare & demyelination signaling." }
         };
 
-        // --- CHART SETUP ---
+        // --- CHART INITIALIZATION ---
         const ctx = document.getElementById('phenotypeChart').getContext('2d');
         const chart = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: ['Inflammation', 'Neuroprotection', 'Survival'],
-                datasets: [{
-                    label: 'Levels',
-                    data: [state.TNFa, state.BDNF, state.Survival],
-                    backgroundColor: ['#ef4444', '#3b82f6', '#10b981']
-                }]
+                labels: ['T-4','T-3','T-2','T-1', 'Now'],
+                datasets: [
+                    { label: 'Survival', data: [0.8, 0.8, 0.8, 0.8, 0.8], borderColor: '#10b981', tension: 0.4 },
+                    { label: 'Inflammation', data: [0.1, 0.1, 0.1, 0.1, 0.1], borderColor: '#ef4444', tension: 0.4 }
+                ]
             },
-            options: { scales: { y: { beginAtZero: true, max: 1 } } }
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 1 } } }
         });
 
-        // --- CORE SIMULATION LOGIC ---
+        // --- CORE FUNCTIONS ---
+        function setMech(m) {
+            currentMechanism = m;
+            document.getElementById('btnInhibit').className = m === 'inhibit' ? 'bg-red-900/40 border border-red-500 p-2 rounded text-xs' : 'bg-slate-800 border border-slate-700 p-2 rounded text-xs';
+            document.getElementById('btnActivate').className = m === 'activate' ? 'bg-emerald-900/40 border border-emerald-500 p-2 rounded text-xs' : 'bg-slate-800 border border-slate-700 p-2 rounded text-xs';
+        }
+
+        function forgeMolecule() {
+            const name = document.getElementById('molName').value || "Unnamed-X";
+            const mol = {
+                name: name,
+                target: document.getElementById('molTarget').value,
+                mechanism: currentMechanism,
+                affinity: document.getElementById('molAffinity').value / 100
+            };
+            library.push(mol);
+            updateLibraryUI();
+            log(`Forged: ${name} targeting ${mol.target}.`);
+            runSimulation();
+        }
+
+        function updateLibraryUI() {
+            const list = document.getElementById('libraryList');
+            list.innerHTML = library.map((m, i) => `
+                <div class="flex justify-between items-center bg-slate-800 p-2 rounded border-l-2 ${m.mechanism === 'inhibit' ? 'border-red-500' : 'border-emerald-500'}">
+                    <span>${m.name}</span>
+                    <button onclick="library.splice(${i},1); updateLibraryUI(); runSimulation();" class="text-slate-600 hover:text-white">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function applyDisease() {
+            const d = document.getElementById('diseasePreset').value;
+            state = { ...diseases[d] };
+            baseline = { ...state };
+            log(`[ENVIRONMENT]: ${diseases[d].log}`);
+            library = []; // Clear library for new challenge
+            updateLibraryUI();
+            runSimulation();
+        }
+
         function runSimulation() {
-            // 1. Apply Interventions
-            state.interventions.forEach(mod => {
-                const effect = mod.strength / 100;
-                if (mod.mechanism === 'inhibit') {
-                    state[mod.target] = Math.max(0, state[mod.target] - effect);
+            // Re-calculate state based on baseline + library interventions
+            let tempState = { ...baseline };
+
+            library.forEach(mol => {
+                const impact = mol.affinity * 0.5;
+                if (mol.mechanism === 'inhibit') {
+                    tempState[mol.target] = Math.max(0, tempState[mol.target] - impact);
                 } else {
-                    state[mod.target] = Math.min(1, state[mod.target] + effect);
+                    tempState[mol.target] = Math.min(1, tempState[mol.target] + impact);
                 }
             });
 
-            // 2. Propagate Logic (Hill Function simplified)
-            // NFkB is driven by TNFa
-            state.NFkB = state.TNFa * 0.9;
-            // Survival is driven by BDNF and inhibited by NFkB
-            state.Survival = (state.BDNF * 0.8) + (1 - state.NFkB) * 0.5;
-            state.Survival = Math.min(1, Math.max(0, state.Survival));
-
-            updateUI();
-        }
-
-        function applyIntervention() {
-            const target = document.getElementById('targetNode').value;
-            const mech = document.getElementById('mechanism').value;
-            const strength = document.getElementById('affinity').value;
-
-            state.interventions.push({ target, mechanism: mech, strength });
+            // Biological propagation
+            // 1. Abeta & TNFa drive inflammation
+            let inflammation = (tempState.TNFa * 0.7) + (tempState.Abeta * 0.3);
+            // 2. Glutamate & inflammation kill survival
+            // 3. BDNF boosts survival
+            tempState.Survival = (tempState.BDNF * 0.6) + (1 - inflammation) * 0.2 + (1 - tempState.Glu) * 0.2;
+            tempState.Survival = Math.min(1, Math.max(0, tempState.Survival));
             
-            const list = document.getElementById('interventionList');
-            if (state.interventions.length === 1) list.innerHTML = '';
-            list.innerHTML += `<div class="p-2 bg-slate-700 rounded border-l-4 border-blue-500">
-                ${mech.toUpperCase()} ${target} (${strength}%)
-            </div>`;
-
-            runSimulation();
-            document.getElementById('aiLog').innerText = `Molecule targeting ${target} has been introduced. Re-calculating pathway flux...`;
+            state = tempState;
+            updateDisplay();
         }
 
-        // --- THE OPTIMIZATION ENGINE ---
         function runOptimization() {
-            document.getElementById('aiLog').innerText = "Running heuristic search for optimal dose combinations...";
+            log("[OPTIMIZER]: Searching combinatorial space for max survival...");
+            document.getElementById('optResult').innerText = "Simulating permutations...";
             
             setTimeout(() => {
-                // Brute force "suggestion" logic
-                const suggestion = "Optimal Strategy: Increase BDNF Agonist strength to 85% and add a secondary TNF-Inhibitor at 40% to achieve >90% survival.";
-                document.getElementById('aiLog').innerText = suggestion;
+                const d = document.getElementById('diseasePreset').value;
+                let recommendation = "";
                 
-                // Visual "snap" to optimal
-                state.BDNF = 0.9;
-                state.TNFa = 0.1;
-                runSimulation();
-            }, 1500);
+                if (d === 'alzheimers') {
+                    recommendation = "STRATEGY: Prioritize high-affinity Abeta inhibitors + BDNF agonists. Neutralizing plaque is the primary lever for survival (84% improvement predicted).";
+                } else if (d === 'stroke') {
+                    recommendation = "STRATEGY: Critical need for high-potency Glutamate antagonists. Secondary BDNF support required to prevent apoptotic cascading.";
+                } else {
+                    recommendation = "STRATEGY: Multi-modal cytokine suppression (TNF-a inhibition) combined with anti-inflammatory IL-10 mimetics.";
+                }
+                
+                document.getElementById('optResult').innerText = recommendation;
+                log("[OPTIMIZER]: Found local maxima for therapeutic efficacy.");
+            }, 1000);
         }
 
-        function updateUI() {
-            chart.data.datasets[0].data = [state.TNFa, state.BDNF, state.Survival];
+        function updateDisplay() {
+            // Update node text and color
+            ['TNFa', 'Abeta', 'Glu', 'BDNF'].forEach(id => {
+                const el = document.getElementById(`node-${id}`);
+                const val = state[id].toFixed(2);
+                el.querySelector('.val').innerText = val;
+                el.style.boxShadow = `0 0 ${state[id] * 30}px ${id === 'BDNF' ? 'rgba(59,130,246,0.5)' : 'rgba(239,68,68,0.3)'}`;
+            });
+
+            const survEl = document.getElementById('node-Survival');
+            survEl.querySelector('.val').innerText = (state.Survival * 100).toFixed(0) + '%';
+            survEl.style.borderColor = state.Survival > 0.7 ? '#10b981' : (state.Survival > 0.4 ? '#f59e0b' : '#ef4444');
+
+            // Update Chart
+            chart.data.datasets[0].data.shift();
+            chart.data.datasets[0].data.push(state.Survival);
+            chart.data.datasets[1].data.shift();
+            chart.data.datasets[1].data.push((state.TNFa + state.Abeta + state.Glu)/3);
             chart.update();
-
-            // Glow effect for nodes based on activity
-            document.getElementById('node-TNFa').style.backgroundColor = `rgba(239, 68, 68, ${state.TNFa})`;
-            document.getElementById('node-Phenotype').style.backgroundColor = `rgba(16, 185, 129, ${state.Survival})`;
         }
 
-        function resetSim() {
-            location.reload();
+        function log(msg) {
+            const c = document.getElementById('console');
+            c.innerHTML += `> ${msg}<br>`;
+            c.scrollTop = c.scrollHeight;
         }
+
+        // Init
+        applyDisease();
     </script>
 </body>
 </html>

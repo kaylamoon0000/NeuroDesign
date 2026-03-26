@@ -14,7 +14,7 @@
         .stat-card { background: #0f172a; border: 1px solid #1e293b; padding: 0.75rem; border-radius: 1rem; }
         .moa-box { font-size: 0.65rem; line-height: 1.3; color: #94a3b8; margin-top: 0.5rem; border-top: 1px solid #1e293b; padding-top: 0.6rem; }
         .trial-overlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); z-index: 1000; align-items: center; justify-content: center; }
-        .region-header { color: #fbbf24; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; width: 100%; }
+        .region-header { color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; width: 100%; }
         @keyframes pulse-red { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.9; background-color: #ef4444; } }
         .tox-warning { animation: pulse-red 0.8s infinite !important; }
     </style>
@@ -64,10 +64,7 @@
                 </div>
                 <div class="flex flex-col border-r border-slate-800 pr-3">
                     <span class="text-[8px] text-slate-500 font-bold mb-1 uppercase text-center">Sex</span>
-                    <select id="patientSex" onchange="updateDemographics()" class="bg-transparent text-xs font-bold text-blue-400 outline-none cursor-pointer">
-                        <option value="male">XY (Male)</option>
-                        <option value="female">XX (Female)</option>
-                    </select>
+                    <button id="sexToggle" onclick="toggleSex()" class="text-xs font-black text-blue-400 uppercase tracking-tighter">XY (Male)</button>
                 </div>
                 <div class="flex flex-col border-r border-slate-800 pr-3">
                     <div class="flex justify-between w-16 text-[8px] font-bold text-slate-500"><span>AGE</span><span id="ageDisp" class="text-blue-400">45y</span></div>
@@ -331,10 +328,17 @@
         }
 
         function closeTrial() { document.getElementById('trialModal').style.display = 'none'; }
+        
+        function toggleSex() {
+            patient.sex = patient.sex === 'male' ? 'female' : 'male';
+            document.getElementById('sexToggle').innerText = patient.sex === 'male' ? 'XY (Male)' : 'XX (Female)';
+            logToTerminal(`Patient Updated: ${patient.age}y ${patient.sex} ${patient.weight}kg`);
+            updateVisuals();
+        }
+
         function updateDemographics() {
             patient.age = parseInt(document.getElementById('age').value);
             patient.weight = parseInt(document.getElementById('weight').value);
-            patient.sex = document.getElementById('patientSex').value;
             document.getElementById('ageDisp').innerText = patient.age + 'y';
             document.getElementById('weightDisp').innerText = patient.weight + 'kg';
             logToTerminal(`Patient Updated: ${patient.age}y ${patient.sex} ${patient.weight}kg`);

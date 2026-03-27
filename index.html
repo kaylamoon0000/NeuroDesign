@@ -223,7 +223,6 @@
         function applyDisease() {
             currentDisease = document.getElementById('diseasePreset').value;
             logToTerminal(`Pathology: Initializing ${currentDisease.toUpperCase()}`);
-            optimizeDosage(); // Fix: Automatically optimize when pathology changes
             updateVisuals();
         }
 
@@ -243,19 +242,15 @@
             let drugTox = 0;
             activeMolecules.forEach(mol => {
                 let doseScale = mol.dose / volDist;
-                let power = (2.5 / mol.affinity) * (mol.specificity / 100); // Fix: Higher base power for optimization impact
+                let power = (2.5 / mol.affinity) * (mol.specificity / 100); 
                 
                 if (mol.mechanism === 'inhibit') currentLevels[mol.target] = Math.max(0, currentLevels[mol.target] - (doseScale * power));
                 else currentLevels[mol.target] = Math.min(2.5, currentLevels[mol.target] + (doseScale * power));
                 
-                // Fix: Drug toxicity penalty lowered for optimized doses to allow high viability
                 drugTox += (Math.pow(mol.dose, 1.6)) / (toxinThreshold * 1.5);
             });
 
-            // Focus on primary neuronal killers: ROS and TNFa
             let cellularDamage = (currentLevels.TNFa * 0.4) + (currentLevels.ROS * 0.4) + (currentLevels.Glu * 0.1) + (currentLevels.Abeta * 0.1);
-            
-            // Fix: Viability sensitivity balanced to show clear benefit of optimization
             let survival = Math.max(0, Math.min(1, 1.05 - (cellularDamage * 0.9) - (drugTox * 0.4)));
             
             return { levels: currentLevels, survival, toxicity: drugTox, threshold: toxinThreshold, reserve: renalReserve };
@@ -326,13 +321,11 @@
         }
 
         function optimizeDosage() {
-            // Fix: Refined safety calculation specifically for high viability targets
             let resIndex = (patient.weight / 75) * (1.3 - (patient.age / 100));
             let base = diseaseBase[currentDisease];
             activeMolecules = [];
             
             if (currentDisease !== 'healthy') {
-                // Multi-target optimization for maximal neuronal protection
                 if (base.TNFa > 0.4) {
                     activeMolecules.push({ name: "Ligand-α", target: "TNFa", mechanism: "inhibit", dose: Math.min(0.4, base.TNFa * 0.5), affinity: 0.4, specificity: 98, halfLife: 24 });
                 }

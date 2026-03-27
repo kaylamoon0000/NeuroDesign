@@ -325,24 +325,28 @@
             activeMolecules = [];
             
             if (currentDisease !== 'healthy') {
-                // Fix: Sort disease markers to find the primary driver
                 let markers = Object.entries(base)
-                    .filter(([key]) => key !== 'Ach') // Ach is usually a deficit, not a toxic driver
+                    .filter(([key]) => key !== 'Ach') 
                     .sort((a, b) => b[1] - a[1]);
 
-                // 1. Target the Primary Pathology Driver (First recommendation)
-                const [primaryTarget, primaryValue] = markers[0];
-                let primaryName = primaryTarget.charAt(0).toUpperCase() + primaryTarget.slice(1) + "-Block";
-                activeMolecules.push({ name: primaryName, target: primaryTarget, mechanism: "inhibit", dose: Math.min(0.5, primaryValue * 0.6), affinity: 0.3, specificity: 98, halfLife: 24 });
+                const names = ["Ligand-α", "Redox-β", "Gamma-L", "Delta-Σ", "Epsilon-X", "Zeta-Ω"];
 
-                // 2. Target the Secondary Pathology Driver
-                const [secondaryTarget, secondaryValue] = markers[1];
-                if (secondaryValue > 0.3) {
-                    let secondaryName = secondaryTarget.charAt(0).toUpperCase() + secondaryTarget.slice(1) + "-Mod";
-                    activeMolecules.push({ name: secondaryName, target: secondaryTarget, mechanism: "inhibit", dose: Math.min(0.4, secondaryValue * 0.4), affinity: 0.5, specificity: 95, halfLife: 12 });
-                }
+                markers.forEach(([target, val], index) => {
+                    // Optimized: scan ALL markers and address everything significantly elevated
+                    if (val > 0.2) {
+                        activeMolecules.push({
+                            name: names[index] || `Ligand-${index}`,
+                            target: target,
+                            mechanism: "inhibit",
+                            dose: Math.min(0.5, val * 0.5),
+                            affinity: 0.3 + (index * 0.1),
+                            specificity: 98 - index,
+                            halfLife: 24 - (index * 2)
+                        });
+                    }
+                });
 
-                // 3. Address Acetylcholine deficit specifically for neuro-cognition if low
+                // Address specific Acetylcholine deficit
                 if (base.Ach < 0.4) {
                     activeMolecules.push({ name: "Cogni-Boost", target: "Ach", mechanism: "activate", dose: 0.20, affinity: 1.2, specificity: 88, halfLife: 8 });
                 }
@@ -350,7 +354,7 @@
             
             renderRack();
             updateVisuals();
-            logToTerminal(`Optimization: Targeted pathology protocol for ${currentDisease.toUpperCase()}.`);
+            logToTerminal(`Optimization: Comprehensive multi-target protocol finalized for ${currentDisease.toUpperCase()}.`);
         }
 
         function runTrial() {

@@ -20,6 +20,7 @@
         .toggle-container { width: 64px; height: 24px; background: #1e293b; border-radius: 12px; position: relative; cursor: pointer; border: 1px solid #334155; }
         .toggle-slider { position: absolute; top: 2px; left: 2px; width: 28px; height: 18px; background: #3b82f6; border-radius: 10px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: white; }
         .toggle-container.female .toggle-slider { left: 32px; background: #60a5fa; }
+        #heat-overlay div { transition: background-color 0.8s ease, opacity 0.5s ease; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans overflow-x-hidden">
@@ -29,7 +30,7 @@
             <div class="flex justify-between items-start mb-8">
                 <div>
                     <h2 class="text-3xl font-black italic text-white tracking-tighter uppercase">Phase II Population Study</h2>
-                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-widest">N=100 Stochastic Cohort Analysis</p>
+                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-widest">N=100 Demographic-Adjusted Analysis</p>
                 </div>
                 <div class="flex gap-4">
                     <button onclick="exportData('csv')" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-4 py-2 rounded-xl transition uppercase shadow-lg">Export CSV</button>
@@ -38,9 +39,9 @@
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Success Rate</span><div id="successRate" class="text-5xl font-mono text-emerald-400 mt-2">0%</div></div>
-                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Mean Toxicity</span><div id="meanTox" class="text-5xl font-mono text-red-500 mt-2">0.0</div></div>
-                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Metabolic Delta</span><div id="metLoad" class="text-5xl font-mono text-blue-400 mt-2">0.0</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Mean Efficacy</span><div id="successRate" class="text-5xl font-mono text-emerald-400 mt-2">0%</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Pop. Toxicity</span><div id="meanTox" class="text-5xl font-mono text-red-500 mt-2">0.0</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Therapeutic Index</span><div id="metLoad" class="text-5xl font-mono text-blue-400 mt-2">0.0</div></div>
             </div>
             <div class="h-64 bg-slate-950 rounded-3xl p-6 border border-slate-800 mb-6"><canvas id="trialChart"></canvas></div>
         </div>
@@ -56,14 +57,14 @@
                 <div class="flex flex-col border-r border-slate-800 pr-3">
                     <span class="text-[8px] text-slate-500 font-bold mb-1 uppercase text-center">Pathology</span>
                     <select id="diseasePreset" onchange="applyDisease()" class="bg-transparent text-xs font-bold text-blue-400 outline-none cursor-pointer">
-                        <option value="healthy">Healthy Baseline (Homeostasis)</option>
-                        <option value="alzheimers">Alzheimer's (Amyloid Microenvironment)</option>
-                        <option value="stroke">Ischemic Stroke (Hypoxic Stress Cell)</option>
-                        <option value="parkinsons">Parkinson's (Dopaminergic Decay)</option>
-                        <option value="als">ALS (Motor Neuron Degeneration)</option>
-                        <option value="ms">Multiple Sclerosis (Demyelination)</option>
-                        <option value="tbi">Traumatic Brain Injury (Acute Neurotrauma)</option>
-                        <option value="huntingtons">Huntington's (Proteotoxicity)</option>
+                        <option value="healthy">Healthy Baseline</option>
+                        <option value="alzheimers">Alzheimer's</option>
+                        <option value="stroke">Ischemic Stroke</option>
+                        <option value="parkinsons">Parkinson's</option>
+                        <option value="als">ALS</option>
+                        <option value="ms">Multiple Sclerosis</option>
+                        <option value="tbi">Traumatic Brain Injury</option>
+                        <option value="huntingtons">Huntington's</option>
                     </select>
                 </div>
                 <div class="flex flex-col border-r border-slate-800 pr-3">
@@ -101,10 +102,16 @@
 
         <div class="col-span-12 lg:col-span-5 space-y-6">
             <div class="bg-slate-950 rounded-[3rem] border border-slate-800 p-8 h-[550px] relative shadow-2xl flex flex-col justify-between overflow-hidden">
-                <div id="heat-overlay" class="absolute inset-0 opacity-20 pointer-events-none flex flex-col justify-between p-12">
-                    <div id="heat-pfc" class="w-full h-24 rounded-full blur-3xl bg-emerald-500"></div>
-                    <div id="heat-hip" class="w-full h-24 rounded-full blur-3xl bg-emerald-500"></div>
-                    <div id="heat-bst" class="w-full h-24 rounded-full blur-3xl bg-emerald-500"></div>
+                <div class="absolute top-4 left-6 z-40 bg-slate-900/80 p-2 rounded-lg border border-slate-800 text-[7px] font-bold uppercase tracking-tighter">
+                    <div class="flex items-center gap-2 mb-1"><div class="w-2 h-2 bg-emerald-500 rounded-full"></div><span>Baseline</span></div>
+                    <div class="flex items-center gap-2 mb-1"><div class="w-2 h-2 bg-yellow-500 rounded-full"></div><span>Metabolic Stress</span></div>
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div><span>Pathological Distress</span></div>
+                </div>
+
+                <div id="heat-overlay" class="absolute inset-0 opacity-40 pointer-events-none flex flex-col justify-around p-12">
+                    <div id="heat-pfc" class="w-full h-32 rounded-full blur-[60px] bg-emerald-500"></div>
+                    <div id="heat-hip" class="w-full h-32 rounded-full blur-[60px] bg-emerald-500"></div>
+                    <div id="heat-bst" class="w-full h-32 rounded-full blur-[60px] bg-emerald-500"></div>
                 </div>
 
                 <div class="relative z-30 flex flex-col items-center">
@@ -144,7 +151,7 @@
 
         <div class="col-span-12 lg:col-span-3 space-y-4">
             <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl h-48">
-                <h3 class="text-[9px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Live Viability Stream</h3>
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase mb-4 tracking-widest">Viability Stream</h3>
                 <div class="h-28"><canvas id="phenotypeChart"></canvas></div>
             </div>
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 h-[380px] overflow-y-auto font-mono text-[8px] text-emerald-500 shadow-inner" id="terminal"></div>
@@ -153,13 +160,13 @@
 
     <script>
         const MOA_DATABASE = {
-            TNFa: { inhibit: { summary: "Downregulates NF-κB signaling pathways to mitigate cytokine-mediated glial neuroinflammation.", hl: 0.99 }, activate: { summary: "Systemic induction of the pro-inflammatory secretome, driving microglial hyper-activation.", hl: 0.98 } },
-            BDNF: { activate: { summary: "Potentiates TrkB receptor dimerization to enhance LTP and structural synaptic plasticity.", hl: 0.995 }, inhibit: { summary: "Suppresses neurotrophic support, leading to dendritic spine retraction and impaired repair.", hl: 0.99 } },
-            Abeta: { inhibit: { summary: "Modulates BACE1 activity to prevent the proteolytic cleavage of APP into neurotoxic oligomers.", hl: 0.999 }, activate: { summary: "Catalyzes the extracellular nucleation of proteopathic fibrils, inducing amyloidogenic stress.", hl: 0.999 } },
-            Glu: { inhibit: { summary: "Antagonizes NMDA/AMPA receptors to stabilize ionic flux and prevent calcium-induced excitotoxicity.", hl: 0.98 }, activate: { summary: "Upregulates glutamatergic neurotransmission, increasing the probability of neuronal depolarization.", hl: 0.97 } },
-            Tau: { inhibit: { summary: "Attenuates hyperphosphorylation of microtubule-associated proteins to prevent neurofibrillary tangles.", hl: 0.995 }, activate: { summary: "Promotes the intracellular aggregation of paired helical filaments, destabilizing the cytoskeleton.", hl: 0.99 } },
-            Ach: { activate: { summary: "Inhibits acetylcholinesterase to increase synaptic dwell-time and enhance cholinergic tone.", hl: 0.985 }, inhibit: { summary: "Competitively blocks muscarinic/nicotinic receptors, inducing acute cognitive attenuation.", hl: 0.98 } },
-            ROS: { inhibit: { summary: "Scavenges reactive oxygen species to preserve mitochondrial membrane potential and lipid integrity.", hl: 0.97 }, activate: { summary: "Forces oxidative phosphorylation uncoupling, resulting in catastrophic lipid peroxidation.", hl: 0.96 } }
+            TNFa: { inhibit: { summary: "Downregulates NF-κB signaling pathways to mitigate cytokine-mediated neuroinflammation.", hl: 0.99 }, activate: { summary: "Systemic induction of the pro-inflammatory secretome.", hl: 0.98 } },
+            BDNF: { activate: { summary: "Potentiates TrkB receptor dimerization to enhance synaptic plasticity.", hl: 0.995 }, inhibit: { summary: "Suppresses neurotrophic support, leading to dendritic retraction.", hl: 0.99 } },
+            Abeta: { inhibit: { summary: "Modulates BACE1 activity to prevent APP cleavage into neurotoxic oligomers.", hl: 0.999 }, activate: { summary: "Catalyzes extracellular nucleation of proteopathic fibrils.", hl: 0.999 } },
+            Glu: { inhibit: { summary: "Antagonizes NMDA/AMPA receptors to stabilize ionic flux.", hl: 0.98 }, activate: { summary: "Upregulates glutamatergic neurotransmission.", hl: 0.97 } },
+            Tau: { inhibit: { summary: "Attenuates hyperphosphorylation to prevent neurofibrillary tangles.", hl: 0.995 }, activate: { summary: "Promotes intracellular aggregation of paired helical filaments.", hl: 0.99 } },
+            Ach: { activate: { summary: "Inhibits acetylcholinesterase to increase synaptic cholinergic tone.", hl: 0.985 }, inhibit: { summary: "Competitively blocks muscarinic/nicotinic receptors.", hl: 0.98 } },
+            ROS: { inhibit: { summary: "Scavenges ROS to preserve mitochondrial membrane potential.", hl: 0.97 }, activate: { summary: "Forces oxidative phosphorylation uncoupling.", hl: 0.96 } }
         };
 
         const diseaseBase = {
@@ -190,7 +197,7 @@
         function populateNodeDropdowns() {
             document.querySelectorAll('.node-select').forEach(sel => {
                 sel.innerHTML = '';
-                for(let i=0; i<=120; i+=5) {
+                for(let i=0; i<=200; i+=5) {
                     let v = (i/100).toFixed(2);
                     sel.add(new Option(v, v));
                 }
@@ -199,7 +206,7 @@
 
         function manualOverride(id, val) {
             manualOverrides[id] = parseFloat(val);
-            logToTerminal(`System Alert: Manual Override for ${id} set to ${val}`);
+            logToTerminal(`System Alert: Critical manual override for ${id} set to ${val}`, true);
             updateVisuals();
         }
 
@@ -207,7 +214,7 @@
             patient.sex = (patient.sex === 'male' ? 'female' : 'male');
             document.getElementById('sexToggle').classList.toggle('female');
             document.getElementById('sexToggle').querySelector('.toggle-slider').innerText = (patient.sex === 'male' ? 'XY' : 'XX');
-            logToTerminal(`Physiology: Patient Sex toggled to ${patient.sex.toUpperCase()}`);
+            logToTerminal(`Physiology: Patient hormonal sex set to ${patient.sex.toUpperCase()}`);
             updateVisuals();
         }
 
@@ -216,48 +223,78 @@
             patient.weight = parseInt(document.getElementById('weight').value);
             document.getElementById('ageDisp').innerText = patient.age + 'y';
             document.getElementById('weightDisp').innerText = patient.weight + 'kg';
-            logToTerminal(`Physiology: Age ${patient.age}y / Weight ${patient.weight}kg`);
+            logToTerminal(`Demographics: Age adjusted to ${patient.age} / Weight to ${patient.weight}kg`);
             updateVisuals();
         }
 
         function applyDisease() {
             currentDisease = document.getElementById('diseasePreset').value;
             manualOverrides = {};
-            logToTerminal(`Environment: Initialized ${currentDisease.toUpperCase()}`);
+            logToTerminal(`Environment: Initialized ${currentDisease.toUpperCase()} pathology.`);
             updateVisuals();
         }
 
         function runSingleSim(pAge, pWeight, pSex, isTrial = false) {
             let base = { ...diseaseBase[currentDisease] };
-            let ageMod = (pAge / 100), weightMod = (pWeight / 75), sexMod = (pSex === 'female' ? 1.05 : 1.0);
+            
+            // DEMOGRAPHIC SCALING: Specialized Co-efficients
+            let ageFactor = (pAge / 80);
+            let weightFactor = (pWeight / 75);
+            let sexFactor = (pSex === 'female' ? 1.15 : 1.0);
+
+            // Toxicity Resilience Boundary: Lower Resilience = Higher Toxicity Sensitivity
+            let toxResilience = (pWeight / 75) * (1.25 - (pAge / 100));
+            if (pSex === 'female') toxResilience *= 0.92;
+
             let currentLevels = {};
             ['TNFa', 'Abeta', 'Tau', 'Glu', 'Ach', 'BDNF', 'ROS'].forEach(id => {
-                let val = (manualOverrides[id] !== undefined && !isTrial) ? manualOverrides[id] : (base[id] * weightMod * sexMod);
-                if (id === 'Abeta' || id === 'Tau') val += (ageMod * 0.2);
+                let val = (manualOverrides[id] !== undefined && !isTrial) ? manualOverrides[id] : (base[id] * weightFactor * sexFactor);
+                if (id === 'Abeta' || id === 'Tau') val += (ageFactor * 0.3);
                 currentLevels[id] = val;
             });
 
             let totalTox = 0;
             activeMolecules.forEach(mol => {
-                let effect = mol.dose * (1/mol.affinity) * mol.specificity * (75/pWeight);
+                // Effect scaled by subject volume/weight
+                let effect = mol.dose * (1 / mol.affinity) * mol.specificity * (1 / weightFactor);
+                
                 if (mol.mechanism === 'inhibit') currentLevels[mol.target] = Math.max(0, currentLevels[mol.target] - effect);
-                else currentLevels[mol.target] = Math.min(1.2, currentLevels[mol.target] + effect);
-                totalTox += (mol.dose ** 2) * (1.1 - mol.specificity) * sexMod;
+                else currentLevels[mol.target] = Math.min(2.5, currentLevels[mol.target] + effect);
+                
+                // Specialized Toxicity Boundary Calculation
+                totalTox += ((mol.dose ** 2) * (1.1 - mol.specificity) * sexFactor) / toxResilience;
             });
 
-            let damage = (currentLevels.TNFa * 0.3) + (currentLevels.ROS * 0.3) + (currentLevels.Abeta * 0.2);
-            let survival = Math.max(0, Math.min(1, (1.0 + currentLevels.BDNF * 0.4) - (damage + totalTox)));
+            let damage = (currentLevels.TNFa * 0.4) + (currentLevels.ROS * 0.3) + (currentLevels.Abeta * 0.3);
+            let survival = Math.max(0, Math.min(1, (1.0 + currentLevels.BDNF * 0.5) - (damage + (totalTox * 0.6))));
+            
             return { levels: currentLevels, survival, toxicity: totalTox };
         }
 
         function updateVisuals() {
             let res = runSingleSim(patient.age, patient.weight, patient.sex);
+            
+            // Heatmap logic: Shifts color based on localized distress thresholds
+            const updateHeat = (id, level) => {
+                const el = document.getElementById(id);
+                if (level > 0.9) { el.style.backgroundColor = '#dc2626'; el.style.opacity = '0.75'; }
+                else if (level > 0.45) { el.style.backgroundColor = '#d97706'; el.style.opacity = '0.5'; }
+                else { el.style.backgroundColor = '#10b981'; el.style.opacity = '0.25'; }
+            };
+
+            updateHeat('heat-pfc', (res.levels.TNFa + res.levels.Abeta) / 2);
+            updateHeat('heat-hip', (res.levels.Tau + res.levels.ROS) / 2);
+            updateHeat('heat-bst', res.levels.Glu);
+
             ['TNFa', 'Abeta', 'Tau', 'Glu', 'Ach', 'BDNF', 'ROS'].forEach(id => {
                 document.getElementById(`node-${id}`).querySelector('.node-select').value = res.levels[id].toFixed(2);
             });
+
             document.getElementById('node-Survival').querySelector('.val').innerText = (res.survival * 100).toFixed(0) + '%';
             document.getElementById('toxVal').innerText = res.toxicity.toFixed(3);
-            document.getElementById('bioVal').innerText = (Math.max(0.4, 1.0 - (patient.age/200)) * 100).toFixed(0) + '%';
+            document.getElementById('bioVal').innerText = (Math.max(0.2, 1.0 - (patient.age/140)) * 100).toFixed(0) + '%';
+            document.getElementById('metVal').innerText = (1.0 + ((45 - patient.age) / 50)).toFixed(1) + 'x';
+
             if(mainHistoryChart) {
                 mainHistoryChart.data.datasets[0].data.push(res.survival);
                 if(mainHistoryChart.data.datasets[0].data.length > 50) mainHistoryChart.data.datasets[0].data.shift();
@@ -271,13 +308,13 @@
                 <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700">
                     <div class="flex justify-between items-center mb-3">
                         <input type="text" value="${m.name}" onchange="activeMolecules[${i}].name=this.value; logToTerminal('Agent: Renamed to '+this.value)" class="bg-transparent text-[10px] font-bold text-blue-300 outline-none">
-                        <button onclick="activeMolecules.splice(${i},1); renderRack(); logToTerminal('Agent: Removed '+m.name)" class="text-slate-600">✕</button>
+                        <button onclick="activeMolecules.splice(${i},1); renderRack(); logToTerminal('Agent: Purged '+m.name)" class="text-slate-600">✕</button>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-4">
-                        <select onchange="activeMolecules[${i}].target=this.value; renderRack(); logToTerminal('Agent: '+m.name+' target set to '+this.value)" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 text-white">
+                        <select onchange="activeMolecules[${i}].target=this.value; renderRack(); logToTerminal('Agent: '+m.name+' target to '+this.value)" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 text-white">
                             ${Object.keys(MOA_DATABASE).map(k => `<option value="${k}" ${m.target === k ? 'selected' : ''}>${k}</option>`).join('')}
                         </select>
-                        <select onchange="activeMolecules[${i}].mechanism=this.value; renderRack(); logToTerminal('Agent: '+m.name+' mechanism set to '+this.value)" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 text-white">
+                        <select onchange="activeMolecules[${i}].mechanism=this.value; renderRack(); logToTerminal('Agent: '+m.name+' MOA to '+this.value)" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 text-white">
                             <option value="inhibit" ${m.mechanism === 'inhibit' ? 'selected' : ''}>Inhibit</option>
                             <option value="activate" ${m.mechanism === 'activate' ? 'selected' : ''}>Agonist</option>
                         </select>
@@ -285,12 +322,12 @@
                     <div class="space-y-4">
                         <div class="flex flex-col">
                             <span class="designer-label">Concentration (Dose)</span>
-                            <input type="range" min="0" max="1.5" step="0.01" value="${m.dose}" oninput="activeMolecules[${i}].dose=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Dose set to '+this.value)">
+                            <input type="range" min="0" max="2.5" step="0.01" value="${m.dose}" oninput="activeMolecules[${i}].dose=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Concentration changed to '+this.value)">
                         </div>
                         <div class="grid grid-cols-3 gap-2">
-                            <div><span class="designer-label">Affinity</span><input type="range" min="0.1" max="1.5" step="0.01" value="${m.affinity}" oninput="activeMolecules[${i}].affinity=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Affinity set to '+this.value)"></div>
-                            <div><span class="designer-label">Specificity</span><input type="range" min="0.5" max="1.0" step="0.01" value="${m.specificity}" oninput="activeMolecules[${i}].specificity=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Specificity set to '+this.value)"></div>
-                            <div><span class="designer-label">Half-Life</span><input type="range" min="0.95" max="0.99" step="0.001" value="${m.halfLife}" oninput="activeMolecules[${i}].halfLife=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Half-Life set to '+this.value)"></div>
+                            <div><span class="designer-label">Affinity</span><input type="range" min="0.1" max="1.5" step="0.01" value="${m.affinity}" oninput="activeMolecules[${i}].affinity=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Affinity calibrated')"></div>
+                            <div><span class="designer-label">Specificity</span><input type="range" min="0.5" max="1.0" step="0.01" value="${m.specificity}" oninput="activeMolecules[${i}].specificity=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' Specificity calibrated')"></div>
+                            <div><span class="designer-label">Half-Life</span><input type="range" min="0.95" max="0.99" step="0.001" value="${m.halfLife}" oninput="activeMolecules[${i}].halfLife=parseFloat(this.value); updateVisuals();" onchange="logToTerminal('Agent: '+m.name+' duration set')"></div>
                         </div>
                     </div>
                     <div class="moa-box">${MOA_DATABASE[m.target][m.mechanism].summary}</div>
@@ -299,25 +336,23 @@
         }
 
         function optimizeDosage() {
-            logToTerminal("Optimization: Calculating optimal Spec-Profile...");
+            logToTerminal(`Optimization: Developing profile for ${patient.age}y ${patient.sex.toUpperCase()}...`);
             let base = diseaseBase[currentDisease];
             activeMolecules = [];
             
-            // Logic to ensure treatment is recommended for actual pathologies
             if (currentDisease !== 'healthy') {
-                if (base.TNFa > 0.3) activeMolecules.push({ name: "Anti-Cytokine", target: "TNFa", mechanism: "inhibit", dose: 0.6, affinity: 0.4, specificity: 0.98, halfLife: 0.998 });
-                if (base.Abeta > 0.3) activeMolecules.push({ name: "BACE-Inhibitor", target: "Abeta", mechanism: "inhibit", dose: 0.7, affinity: 0.3, specificity: 0.96, halfLife: 0.999 });
-                if (base.BDNF < 0.6) activeMolecules.push({ name: "TrkB-Agonist", target: "BDNF", mechanism: "activate", dose: 0.4, affinity: 0.5, specificity: 0.92, halfLife: 0.995 });
-                if (base.ROS > 0.4) activeMolecules.push({ name: "Redox-Buff", target: "ROS", mechanism: "inhibit", dose: 0.5, affinity: 0.6, specificity: 0.94, halfLife: 0.997 });
-                logToTerminal(`Optimization: Generated ${activeMolecules.length} agents for ${currentDisease.toUpperCase()}.`);
+                if (base.TNFa > 0.3) activeMolecules.push({ name: "Cytokine-Blocker", target: "TNFa", mechanism: "inhibit", dose: 0.85, affinity: 0.3, specificity: 0.99, halfLife: 0.998 });
+                if (base.Abeta > 0.3) activeMolecules.push({ name: "Plaque-Scrub", target: "Abeta", mechanism: "inhibit", dose: 0.95, affinity: 0.2, specificity: 0.98, halfLife: 0.999 });
+                if (base.BDNF < 0.6) activeMolecules.push({ name: "TrkB-Enhancer", target: "BDNF", mechanism: "activate", dose: 0.6, affinity: 0.45, specificity: 0.95, halfLife: 0.995 });
+                logToTerminal(`Optimization: Deployed ${activeMolecules.length} specialized agents.`);
             } else {
-                logToTerminal("Optimization: Patient Healthy. No treatment recommended.");
+                logToTerminal("Optimization: System in Homeostasis. No intervention needed.");
             }
             renderRack(); updateVisuals();
         }
 
         function runTrial() {
-            logToTerminal("Phase II: Commencing N=100 Simulation...");
+            logToTerminal(`Phase II: Simulating cohort for ${currentDisease.toUpperCase()} pathology...`, true);
             document.getElementById('trialModal').style.display = 'flex';
             trialResults = Array.from({length: 100}, (_, i) => {
                 let rAge = 18 + Math.random() * 75, rWeight = 45 + Math.random() * 90, rSex = Math.random() > 0.5 ? 'male' : 'female';
@@ -328,7 +363,8 @@
             const avgTox = trialResults.reduce((a,b) => a + b.toxicity, 0) / 100;
             document.getElementById('successRate').innerText = (avgSurv * 100).toFixed(1) + '%';
             document.getElementById('meanTox').innerText = avgTox.toFixed(3);
-            document.getElementById('metLoad').innerText = (avgSurv - 0.5).toFixed(2);
+            document.getElementById('metLoad').innerText = (avgSurv / Math.max(0.1, avgTox)).toFixed(2);
+            
             if(!trialChart) {
                 const tCtx = document.getElementById('trialChart').getContext('2d');
                 trialChart = new Chart(tCtx, { type:'bar', data: { labels: trialResults.map(r=>r.id), datasets: [{ data: trialResults.map(r=>r.survival), backgroundColor: '#10b981' }] }, options: { maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
@@ -348,8 +384,8 @@
 
         function closeTrial() { document.getElementById('trialModal').style.display = 'none'; }
         function addNewMolecule() { 
-            activeMolecules.push({ name: "Agent-V", target: "TNFa", mechanism: "inhibit", dose: 0.2, affinity: 1.0, specificity: 0.9, halfLife: 0.98 }); 
-            logToTerminal("Agent: New manual sequence added.");
+            activeMolecules.push({ name: "Ligand-X", target: "TNFa", mechanism: "inhibit", dose: 0.25, affinity: 1.0, specificity: 0.92, halfLife: 0.98 }); 
+            logToTerminal("Agent: New block added to design rack.");
             renderRack(); 
         }
         
@@ -358,7 +394,7 @@
         mainHistoryChart = new Chart(hCtx, { type:'line', data:{ labels:Array(50).fill(''), datasets:[{ data:Array(50).fill(1), borderColor:'#10b981', tension:0.1, pointRadius:0, borderWidth:2 }] }, options:{ maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
         
         setInterval(() => {
-            let metRate = 1.0 + ((45 - patient.age) / 60);
+            let metRate = 1.0 + ((45 - patient.age) / 50);
             activeMolecules.forEach(mol => {
                 mol.dose *= (mol.halfLife - (metRate * 0.0001));
                 if (mol.dose < 0.001) mol.dose = 0;

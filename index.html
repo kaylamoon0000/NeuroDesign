@@ -31,8 +31,8 @@
         <div class="max-w-5xl w-full bg-slate-900 border border-slate-700 rounded-[2.5rem] p-8 shadow-2xl">
             <div class="flex justify-between items-start mb-8">
                 <div>
-                    <h2 class="text-3xl font-black italic text-white tracking-tighter uppercase">Phase II Population Study</h2>
-                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-widest">Physiology-Weighted Cohort N=100</p>
+                    <h2 class="text-3xl font-black italic text-white tracking-tighter uppercase">Clinical Test Result</h2>
+                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-widest">Individual Subject Analysis</p>
                 </div>
                 <div class="flex gap-4">
                     <button onclick="exportData('csv')" class="bg-slate-800 hover:bg-slate-700 text-[10px] font-bold px-4 py-2 rounded-xl text-white transition border border-slate-700">EXPORT CSV</button>
@@ -42,8 +42,8 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Survival Rate</span><div id="successRate" class="text-5xl font-mono text-emerald-400 mt-2">0%</div></div>
-                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Avg Toxicity</span><div id="meanTox" class="text-5xl font-mono text-red-500 mt-2">0.0</div></div>
-                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Reserve Index</span><div id="metLoad" class="text-5xl font-mono text-blue-400 mt-2">0.0</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Toxicity Load</span><div id="meanTox" class="text-5xl font-mono text-red-500 mt-2">0.0</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Metabolic Reserve</span><div id="metLoad" class="text-5xl font-mono text-blue-400 mt-2">0.0</div></div>
             </div>
             <div class="h-64 bg-slate-950 rounded-3xl p-6 border border-slate-800 mb-6"><canvas id="trialChart"></canvas></div>
         </div>
@@ -201,7 +201,7 @@
 
         let patient = { age: 45, weight: 75, sex: 'male' };
         let activeMolecules = [];
-        let trialResults = [];
+        let singleResult = null;
         let currentDisease = "healthy";
         let mainHistoryChart, trialChart;
 
@@ -261,12 +261,13 @@
             let cellularDamage = (currentLevels.TNFa * 0.4) + (currentLevels.ROS * 0.4) + (currentLevels.Glu * 0.1) + (currentLevels.Abeta * 0.1);
             let survival = Math.max(0, Math.min(1, 1.05 - (cellularDamage * 0.9) - (drugTox * 0.4)));
             
-            return { levels: currentLevels, survival, toxicity: drugTox, threshold: toxinThreshold, reserve: renalReserve, age: pAge, sex: pSex };
+            return { levels: currentLevels, survival, toxicity: drugTox, threshold: toxinThreshold, reserve: renalReserve, age: pAge, sex: pSex, weight: pWeight };
         }
 
         function updateVisuals() {
             let res = runSingleSim(patient.age, patient.weight, patient.sex);
-            
+            singleResult = res;
+
             const updateHeat = (id, level, thresh) => {
                 const el = document.getElementById(id);
                 const intensity = level / (thresh * 0.8);
@@ -348,27 +349,45 @@
 
         function runTrial() {
             document.getElementById('trialModal').style.display = 'flex';
-            trialResults = Array.from({length: 100}, () => runSingleSim(18 + Math.random()*75, 40 + Math.random()*110, Math.random()>0.5?'male':'female'));
-            document.getElementById('successRate').innerText = (trialResults.reduce((a,b)=>a+b.survival,0)).toFixed(1) + '%';
-            document.getElementById('meanTox').innerText = (trialResults.reduce((a,b)=>a+b.toxicity,0)/100).toFixed(3);
-            document.getElementById('metLoad').innerText = (trialResults.reduce((a,b)=>a+b.reserve,0)/100).toFixed(2);
+            updateVisuals();
+            document.getElementById('successRate').innerText = (singleResult.survival * 100).toFixed(1) + '%';
+            document.getElementById('meanTox').innerText = singleResult.toxicity.toFixed(3);
+            document.getElementById('metLoad').innerText = (singleResult.reserve * 100).toFixed(1) + '%';
+            
             if(!trialChart) {
                 const tCtx = document.getElementById('trialChart').getContext('2d');
-                trialChart = new Chart(tCtx, { type:'bar', data: { labels: trialResults.map((_,i)=>i), datasets: [{ data: trialResults.map(r=>r.survival), backgroundColor: '#10b981' }] }, options: { maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
-            } else { trialChart.data.datasets[0].data = trialResults.map(r=>r.survival); trialChart.update(); }
+                trialChart = new Chart(tCtx, { type:'bar', data: { labels: ['Subject-01'], datasets: [{ data: [singleResult.survival], backgroundColor: '#10b981' }] }, options: { maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{y:{min:0, max:1}} } });
+            } else { trialChart.data.datasets[0].data = [singleResult.survival]; trialChart.update(); }
         }
 
         function exportData(format) {
+            const now = new Date();
+            let exportPayload = {
+                metadata: { timestamp: now.getTime(), date: now.toISOString() },
+                subject: { age: singleResult.age, sex: singleResult.sex, weight: singleResult.weight, survival: singleResult.survival, toxicity: singleResult.toxicity, metabolicReserve: singleResult.reserve },
+                clinicalLog: activeMolecules.map(m => ({ ligand: m.name, target: m.target, mechanism: m.mechanism, dose: m.dose, affinity: m.affinity, specificity: m.specificity }))
+            };
+
             let content = "";
             if (format === 'csv') {
-                content = "PatientID,Age,Sex,Survival,Toxicity,RenalReserve\n" + trialResults.map((r,i) => `${i},${r.age.toFixed(0)},${r.sex},${r.survival.toFixed(4)},${r.toxicity.toFixed(4)},${r.reserve.toFixed(4)}`).join("\n");
+                content = "Header,Parameter,Value\n";
+                content += `Meta,Timestamp,${exportPayload.metadata.timestamp}\n`;
+                content += `Meta,DateString,${exportPayload.metadata.date}\n`;
+                content += `Patient,Age,${exportPayload.subject.age}\n`;
+                content += `Patient,Sex,${exportPayload.subject.sex}\n`;
+                content += `Result,Survival,${exportPayload.subject.survival}\n`;
+                content += `Result,ToxLoad,${exportPayload.subject.toxicity}\n`;
+                content += "Log,Ligand,Target,Mechanism,Dose,Affinity\n";
+                exportPayload.clinicalLog.forEach(l => {
+                    content += `Log,${l.ligand},${l.target},${l.mechanism},${l.dose.toFixed(3)},${l.affinity}\n`;
+                });
             } else {
-                content = JSON.stringify(trialResults, null, 2);
+                content = JSON.stringify(exportPayload, null, 2);
             }
             const blob = new Blob([content], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `SynaptoCAD_Trial_${new Date().getTime()}.${format}`; a.click();
+            a.href = url; a.download = `SynaptoCAD_Log_${exportPayload.metadata.timestamp}.${format}`; a.click();
         }
 
         function closeTrial() { document.getElementById('trialModal').style.display = 'none'; }

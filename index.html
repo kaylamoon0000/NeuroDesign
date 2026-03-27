@@ -9,21 +9,42 @@
     <style>
         .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); }
         .node { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-width: 2px; position: relative; z-index: 20; }
-        input[type=range] { accent-color: #3b82f6; cursor: pointer; height: 6px; border-radius: 5px; appearance: none; background: #334155; }
-        input[type=range]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; background: #60a5fa; border-radius: 50%; border: 2px solid #fff; }
+        input[type=range] { accent-color: #3b82f6; cursor: pointer; height: 4px; border-radius: 5px; appearance: none; background: #334155; width: 100%; }
+        input[type=range]::-webkit-slider-thumb { appearance: none; width: 10px; height: 10px; background: #60a5fa; border-radius: 50%; border: 1px solid #fff; }
         .stat-card { background: #0f172a; border: 1px solid #1e293b; padding: 0.75rem; border-radius: 1rem; }
         .moa-box { font-size: 0.65rem; line-height: 1.3; color: #94a3b8; margin-top: 0.5rem; border-top: 1px solid #1e293b; padding-top: 0.6rem; min-height: 32px; }
+        .trial-overlay { display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); z-index: 1000; align-items: center; justify-content: center; }
         .region-header { color: #ffffff; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; width: 100%; }
         .node-select { background: transparent; border: none; color: inherit; font-family: monospace; font-size: 10px; outline: none; text-align: center; cursor: pointer; width: 100%; appearance: none; }
         .designer-label { font-size: 7px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        @keyframes pulse-red { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.9; background-color: #ef4444; } }
-        .tox-warning { animation: pulse-red 0.8s infinite !important; }
         .toggle-container { width: 64px; height: 24px; background: #1e293b; border-radius: 12px; position: relative; cursor: pointer; border: 1px solid #334155; }
         .toggle-slider { position: absolute; top: 2px; left: 2px; width: 28px; height: 18px; background: #3b82f6; border-radius: 10px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: white; }
         .toggle-container.female .toggle-slider { left: 32px; background: #60a5fa; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans overflow-x-hidden">
+
+    <div id="trialModal" class="trial-overlay p-4 lg:p-12">
+        <div class="max-w-5xl w-full bg-slate-900 border border-slate-700 rounded-[2.5rem] p-8 shadow-2xl">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 class="text-3xl font-black italic text-white tracking-tighter uppercase">Phase II Population Study</h2>
+                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-widest">N=100 Stochastic Cohort Analysis</p>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="exportData('csv')" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-4 py-2 rounded-xl transition uppercase shadow-lg">Export CSV</button>
+                    <button onclick="exportData('json')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black px-4 py-2 rounded-xl transition uppercase shadow-lg">Export JSON</button>
+                    <button onclick="closeTrial()" class="bg-slate-800 hover:bg-slate-700 w-10 h-10 rounded-full flex items-center justify-center text-white transition">✕</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Success Rate</span><div id="successRate" class="text-5xl font-mono text-emerald-400 mt-2">0%</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Mean Toxicity</span><div id="meanTox" class="text-5xl font-mono text-red-500 mt-2">0.0</div></div>
+                <div class="stat-card text-center"><span class="text-[10px] text-slate-500 font-bold uppercase">Metabolic Delta</span><div id="metLoad" class="text-5xl font-mono text-blue-400 mt-2">0.0</div></div>
+            </div>
+            <div class="h-64 bg-slate-950 rounded-3xl p-6 border border-slate-800 mb-6"><canvas id="trialChart"></canvas></div>
+        </div>
+    </div>
 
     <nav class="border-b border-slate-800 p-4 sticky top-0 z-50 glass">
         <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
@@ -59,7 +80,7 @@
                     <div class="flex justify-between w-16 text-[8px] font-bold text-slate-500"><span>WT</span><span id="weightDisp" class="text-blue-400">75kg</span></div>
                     <input type="range" id="weight" min="40" max="150" value="75" oninput="updateDemographics()">
                 </div>
-                <button onclick="optimizeDosage()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-4 py-2 rounded-xl transition shadow-lg uppercase italic">Optimize Agent</button>
+                <button onclick="runTrial()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-4 py-2 rounded-xl transition shadow-lg uppercase italic">Run Clinical Trial</button>
             </div>
         </div>
     </nav>
@@ -69,7 +90,10 @@
             <div class="bg-slate-900/50 p-5 rounded-3xl border border-slate-800 shadow-2xl h-full flex flex-col">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Molecular Design Studio</h2>
-                    <button onclick="addNewMolecule()" class="text-[9px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 hover:bg-blue-600 hover:text-white transition font-bold uppercase">+ Add Agent</button>
+                    <div class="flex gap-2">
+                        <button onclick="optimizeDosage()" class="text-[9px] bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition font-bold uppercase">Optimize</button>
+                        <button onclick="addNewMolecule()" class="text-[9px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 hover:bg-blue-600 hover:text-white transition font-bold uppercase">+ Add Agent</button>
+                    </div>
                 </div>
                 <div id="moleculeRack" class="space-y-4 overflow-y-auto pr-2 flex-grow max-h-[78vh]"></div>
             </div>
@@ -125,7 +149,7 @@
             </div>
             <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 h-[380px] overflow-y-auto font-mono text-[8px] text-emerald-500 shadow-inner" id="terminal"></div>
         </div>
-    </nav>
+    </main>
 
     <script>
         const MOA_DATABASE = {
@@ -153,7 +177,7 @@
         let activeMolecules = [];
         let currentDisease = "healthy";
         let manualOverrides = {};
-        let mainHistoryChart;
+        let mainHistoryChart, trialChart, trialResults = [];
 
         function logToTerminal(msg, isAlert = false) {
             const term = document.getElementById('terminal');
@@ -180,11 +204,10 @@
         }
 
         function toggleSex() {
-            patient.sex = patient.sex === 'male' ? 'female' : 'male';
-            const toggle = document.getElementById('sexToggle');
-            toggle.querySelector('.toggle-slider').innerText = patient.sex === 'male' ? 'XY' : 'XX';
-            toggle.classList.toggle('female');
-            logToTerminal(`Sex physiology adjusted to ${patient.sex}`);
+            patient.sex = (patient.sex === 'male' ? 'female' : 'male');
+            document.getElementById('sexToggle').classList.toggle('female');
+            document.getElementById('sexToggle').querySelector('.toggle-slider').innerText = (patient.sex === 'male' ? 'XY' : 'XX');
+            logToTerminal(`System sex toggle: ${patient.sex.toUpperCase()}`);
             updateVisuals();
         }
 
@@ -193,65 +216,50 @@
             patient.weight = parseInt(document.getElementById('weight').value);
             document.getElementById('ageDisp').innerText = patient.age + 'y';
             document.getElementById('weightDisp').innerText = patient.weight + 'kg';
-            logToTerminal(`Demographics Updated: ${patient.age}y / ${patient.weight}kg`);
+            logToTerminal(`Physiology Shift: Age ${patient.age} / Weight ${patient.weight}`);
             updateVisuals();
         }
 
         function applyDisease() {
             currentDisease = document.getElementById('diseasePreset').value;
             manualOverrides = {};
-            logToTerminal(`Environment Switched: ${currentDisease.toUpperCase()}`);
+            logToTerminal(`New Environment Mapping: ${currentDisease.toUpperCase()}`);
             updateVisuals();
         }
 
-        setInterval(() => {
-            let metRate = 1.0 + ((45 - patient.age) / 60);
-            activeMolecules.forEach(mol => {
-                // Precise Half-Life calculation based on slider
-                mol.dose *= (mol.halfLife - (metRate * 0.0002));
-                if (mol.dose < 0.001) mol.dose = 0;
-            });
-            updateVisuals();
-        }, 200);
-
-        function updateVisuals() {
+        function runSingleSim(pAge, pWeight, pSex, isTrial = false) {
             let base = { ...diseaseBase[currentDisease] };
-            
-            // Re-applying demographic scaling to pathology levels
-            let ageMod = (patient.age / 100);
-            let weightMod = (patient.weight / 75);
-            let sexMod = patient.sex === 'female' ? 1.05 : 1.0;
-
+            let ageMod = (pAge / 100), weightMod = (pWeight / 75), sexMod = (pSex === 'female' ? 1.05 : 1.0);
             let currentLevels = {};
             ['TNFa', 'Abeta', 'Tau', 'Glu', 'Ach', 'BDNF', 'ROS'].forEach(id => {
-                let val = manualOverrides[id] !== undefined ? manualOverrides[id] : (base[id] * weightMod * sexMod);
+                let val = (manualOverrides[id] !== undefined && !isTrial) ? manualOverrides[id] : (base[id] * weightMod * sexMod);
                 if (id === 'Abeta' || id === 'Tau') val += (ageMod * 0.2);
                 currentLevels[id] = val;
             });
 
             let totalTox = 0;
             activeMolecules.forEach(mol => {
-                let effect = mol.dose * (1/mol.affinity) * mol.specificity * (75/patient.weight);
+                let effect = mol.dose * (1/mol.affinity) * mol.specificity * (75/pWeight);
                 if (mol.mechanism === 'inhibit') currentLevels[mol.target] = Math.max(0, currentLevels[mol.target] - effect);
                 else currentLevels[mol.target] = Math.min(1.2, currentLevels[mol.target] + effect);
-                
-                totalTox += (mol.dose ** 2) * (1.1 - mol.specificity);
-            });
-
-            ['TNFa', 'Abeta', 'Tau', 'Glu', 'Ach', 'BDNF', 'ROS'].forEach(id => {
-                const sel = document.getElementById(`node-${id}`).querySelector('.node-select');
-                sel.value = currentLevels[id].toFixed(2);
+                totalTox += (mol.dose ** 2) * (1.1 - mol.specificity) * sexMod;
             });
 
             let damage = (currentLevels.TNFa * 0.3) + (currentLevels.ROS * 0.3) + (currentLevels.Abeta * 0.2);
             let survival = Math.max(0, Math.min(1, (1.0 + currentLevels.BDNF * 0.4) - (damage + totalTox)));
-            
-            document.getElementById('node-Survival').querySelector('.val').innerText = (survival * 100).toFixed(0) + '%';
-            document.getElementById('toxVal').innerText = totalTox.toFixed(3);
-            document.getElementById('bioVal').innerText = (Math.max(0.4, 1.0 - (patient.age/200)) * 100).toFixed(0) + '%';
+            return { levels: currentLevels, survival, toxicity: totalTox };
+        }
 
+        function updateVisuals() {
+            let res = runSingleSim(patient.age, patient.weight, patient.sex);
+            ['TNFa', 'Abeta', 'Tau', 'Glu', 'Ach', 'BDNF', 'ROS'].forEach(id => {
+                document.getElementById(`node-${id}`).querySelector('.node-select').value = res.levels[id].toFixed(2);
+            });
+            document.getElementById('node-Survival').querySelector('.val').innerText = (res.survival * 100).toFixed(0) + '%';
+            document.getElementById('toxVal').innerText = res.toxicity.toFixed(3);
+            document.getElementById('bioVal').innerText = (Math.max(0.4, 1.0 - (patient.age/200)) * 100).toFixed(0) + '%';
             if(mainHistoryChart) {
-                mainHistoryChart.data.datasets[0].data.push(survival);
+                mainHistoryChart.data.datasets[0].data.push(res.survival);
                 if(mainHistoryChart.data.datasets[0].data.length > 50) mainHistoryChart.data.datasets[0].data.shift();
                 mainHistoryChart.update('none');
             }
@@ -261,11 +269,11 @@
             const rack = document.getElementById('moleculeRack');
             rack.innerHTML = activeMolecules.map((m, i) => `
                 <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700">
-                    <div class="flex justify-between items-center mb-2">
+                    <div class="flex justify-between items-center mb-3">
                         <input type="text" value="${m.name}" onchange="activeMolecules[${i}].name=this.value" class="bg-transparent text-[10px] font-bold text-blue-300 outline-none">
                         <button onclick="activeMolecules.splice(${i},1); renderRack();" class="text-slate-600">✕</button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="grid grid-cols-2 gap-2 mb-4">
                         <select onchange="activeMolecules[${i}].target=this.value; renderRack();" class="bg-slate-900 text-[9px] p-1 rounded border border-slate-700 text-white">
                             ${Object.keys(MOA_DATABASE).map(k => `<option value="${k}" ${m.target === k ? 'selected' : ''}>${k}</option>`).join('')}
                         </select>
@@ -274,24 +282,15 @@
                             <option value="activate" ${m.mechanism === 'activate' ? 'selected' : ''}>Agonist</option>
                         </select>
                     </div>
-                    <div class="space-y-3">
-                        <div>
+                    <div class="space-y-4">
+                        <div class="flex flex-col">
                             <span class="designer-label">Concentration (Dose)</span>
                             <input type="range" min="0" max="1.5" step="0.01" value="${m.dose}" oninput="activeMolecules[${i}].dose=parseFloat(this.value); updateVisuals();">
                         </div>
                         <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <span class="designer-label">Affinity</span>
-                                <input type="range" min="0.1" max="1.5" step="0.01" value="${m.affinity}" oninput="activeMolecules[${i}].affinity=parseFloat(this.value); updateVisuals();">
-                            </div>
-                            <div>
-                                <span class="designer-label">Specificity</span>
-                                <input type="range" min="0.5" max="1.0" step="0.01" value="${m.specificity}" oninput="activeMolecules[${i}].specificity=parseFloat(this.value); updateVisuals();">
-                            </div>
-                            <div>
-                                <span class="designer-label">Half-Life</span>
-                                <input type="range" min="0.95" max="0.999" step="0.001" value="${m.halfLife}" oninput="activeMolecules[${i}].halfLife=parseFloat(this.value); updateVisuals();">
-                            </div>
+                            <div><span class="designer-label">Affinity</span><input type="range" min="0.1" max="1.5" step="0.01" value="${m.affinity}" oninput="activeMolecules[${i}].affinity=parseFloat(this.value); updateVisuals();"></div>
+                            <div><span class="designer-label">Specificity</span><input type="range" min="0.5" max="1.0" step="0.01" value="${m.specificity}" oninput="activeMolecules[${i}].specificity=parseFloat(this.value); updateVisuals();"></div>
+                            <div><span class="designer-label">Half-Life</span><input type="range" min="0.95" max="0.99" step="0.001" value="${m.halfLife}" oninput="activeMolecules[${i}].halfLife=parseFloat(this.value); updateVisuals();"></div>
                         </div>
                     </div>
                     <div class="moa-box">${MOA_DATABASE[m.target][m.mechanism].summary}</div>
@@ -300,24 +299,60 @@
         }
 
         function optimizeDosage() {
-            logToTerminal(`Calculating optimal BME parameters for ${currentDisease}...`);
+            logToTerminal("Calculating Optimal Engineering Specs...");
             let base = diseaseBase[currentDisease];
             activeMolecules = [];
-            if (base.TNFa > 0.4) activeMolecules.push({ name: "Opti-mAb", target: "TNFa", mechanism: "inhibit", dose: 0.6, affinity: 0.4, specificity: 0.98, halfLife: 0.998 });
-            if (base.Abeta > 0.5) activeMolecules.push({ name: "BBB-Chaperone", target: "Abeta", mechanism: "inhibit", dose: 0.7, affinity: 0.3, specificity: 0.96, halfLife: 0.999 });
-            renderRack();
-            updateVisuals();
+            if (base.TNFa > 0.4) activeMolecules.push({ name: "Cytokine-mAb", target: "TNFa", mechanism: "inhibit", dose: 0.65, affinity: 0.4, specificity: 0.98, halfLife: 0.998 });
+            if (base.Abeta > 0.5) activeMolecules.push({ name: "BACE1-Mod", target: "Abeta", mechanism: "inhibit", dose: 0.75, affinity: 0.3, specificity: 0.96, halfLife: 0.999 });
+            renderRack(); updateVisuals();
         }
 
-        function addNewMolecule() {
-            activeMolecules.push({ name: "New-Agent", target: "TNFa", mechanism: "inhibit", dose: 0.2, affinity: 1.0, specificity: 0.9, halfLife: 0.99 });
-            renderRack();
+        function runTrial() {
+            logToTerminal(`Initializing Phase II Simulation for ${currentDisease.toUpperCase()}...`);
+            document.getElementById('trialModal').style.display = 'flex';
+            trialResults = Array.from({length: 100}, (_, i) => {
+                let rAge = 18 + Math.random() * 75, rWeight = 45 + Math.random() * 90, rSex = Math.random() > 0.5 ? 'male' : 'female';
+                let sim = runSingleSim(rAge, rWeight, rSex, true);
+                return { id: i+1, age: Math.round(rAge), weight: Math.round(rWeight), sex: rSex, survival: sim.survival, toxicity: sim.toxicity };
+            });
+            const avgSurv = trialResults.reduce((a,b) => a + b.survival, 0) / 100;
+            const avgTox = trialResults.reduce((a,b) => a + b.toxicity, 0) / 100;
+            document.getElementById('successRate').innerText = (avgSurv * 100).toFixed(1) + '%';
+            document.getElementById('meanTox').innerText = avgTox.toFixed(3);
+            document.getElementById('metLoad').innerText = (avgSurv - 0.5).toFixed(2);
+            if(!trialChart) {
+                const tCtx = document.getElementById('trialChart').getContext('2d');
+                trialChart = new Chart(tCtx, { type:'bar', data: { labels: trialResults.map(r=>r.id), datasets: [{ data: trialResults.map(r=>r.survival), backgroundColor: '#10b981' }] }, options: { maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
+            } else { trialChart.data.datasets[0].data = trialResults.map(r=>r.survival); trialChart.update(); }
         }
 
+        function exportData(type) {
+            let content = '';
+            if(type === 'csv') {
+                content = "ID,Age,Weight,Sex,Survival,Toxicity\n" + trialResults.map(r => `${r.id},${r.age},${r.weight},${r.sex},${r.survival.toFixed(4)},${r.toxicity.toFixed(4)}`).join("\n");
+            } else {
+                content = JSON.stringify({ metadata: { disease: currentDisease, timestamp: new Date() }, patients: trialResults }, null, 2);
+            }
+            const blob = new Blob([content], {type: type === 'csv' ? 'text/csv' : 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Trial_Results_${currentDisease}.${type}`; a.click();
+        }
+
+        function closeTrial() { document.getElementById('trialModal').style.display = 'none'; }
+        function addNewMolecule() { activeMolecules.push({ name: "Molecule-X", target: "TNFa", mechanism: "inhibit", dose: 0.2, affinity: 1.0, specificity: 0.9, halfLife: 0.98 }); renderRack(); }
+        
         populateNodeDropdowns();
         const hCtx = document.getElementById('phenotypeChart').getContext('2d');
         mainHistoryChart = new Chart(hCtx, { type:'line', data:{ labels:Array(50).fill(''), datasets:[{ data:Array(50).fill(1), borderColor:'#10b981', tension:0.1, pointRadius:0, borderWidth:2 }] }, options:{ maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
         
+        setInterval(() => {
+            let metRate = 1.0 + ((45 - patient.age) / 60);
+            activeMolecules.forEach(mol => {
+                mol.dose *= (mol.halfLife - (metRate * 0.0001));
+                if (mol.dose < 0.001) mol.dose = 0;
+            });
+            updateVisuals();
+        }, 250);
+
         applyDisease();
     </script>
 </body>

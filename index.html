@@ -35,6 +35,8 @@
                     <p class="text-emerald-400 text-xs font-bold uppercase tracking-widest">Physiology-Weighted Cohort N=100</p>
                 </div>
                 <div class="flex gap-4">
+                    <button onclick="exportData('csv')" class="bg-slate-800 hover:bg-slate-700 text-[10px] font-bold px-4 py-2 rounded-xl text-white transition border border-slate-700">EXPORT CSV</button>
+                    <button onclick="exportData('json')" class="bg-slate-800 hover:bg-slate-700 text-[10px] font-bold px-4 py-2 rounded-xl text-white transition border border-slate-700">EXPORT JSON</button>
                     <button onclick="closeTrial()" class="bg-slate-800 hover:bg-slate-700 w-10 h-10 rounded-full flex items-center justify-center text-white transition">✕</button>
                 </div>
             </div>
@@ -199,6 +201,7 @@
 
         let patient = { age: 45, weight: 75, sex: 'male' };
         let activeMolecules = [];
+        let trialResults = [];
         let currentDisease = "healthy";
         let mainHistoryChart, trialChart;
 
@@ -258,7 +261,7 @@
             let cellularDamage = (currentLevels.TNFa * 0.4) + (currentLevels.ROS * 0.4) + (currentLevels.Glu * 0.1) + (currentLevels.Abeta * 0.1);
             let survival = Math.max(0, Math.min(1, 1.05 - (cellularDamage * 0.9) - (drugTox * 0.4)));
             
-            return { levels: currentLevels, survival, toxicity: drugTox, threshold: toxinThreshold, reserve: renalReserve };
+            return { levels: currentLevels, survival, toxicity: drugTox, threshold: toxinThreshold, reserve: renalReserve, age: pAge, sex: pSex };
         }
 
         function updateVisuals() {
@@ -285,17 +288,12 @@
             document.getElementById('bioVal').innerText = (res.reserve * 100).toFixed(0) + '%';
             document.getElementById('metVal').innerText = (1 + (patient.age / 110)).toFixed(1) + 'x';
 
-            // Toxicity Alert Logic
             const alertEl = document.getElementById('toxWarning');
             const headerEl = document.getElementById('designHeader');
             if (res.toxicity > res.threshold * 0.7) {
-                alertEl.classList.remove('hidden');
-                alertEl.classList.add('toxic-alert');
-                headerEl.classList.add('hidden');
+                alertEl.classList.remove('hidden'); alertEl.classList.add('toxic-alert'); headerEl.classList.add('hidden');
             } else {
-                alertEl.classList.add('hidden');
-                alertEl.classList.remove('toxic-alert');
-                headerEl.classList.remove('hidden');
+                alertEl.classList.add('hidden'); alertEl.classList.remove('toxic-alert'); headerEl.classList.remove('hidden');
             }
 
             if(mainHistoryChart) {
@@ -323,10 +321,7 @@
                         </select>
                     </div>
                     <div class="space-y-3">
-                        <div>
-                            <span class="designer-label">Concentration <span>${m.dose.toFixed(2)} mg/L</span></span>
-                            <input type="range" min="0" max="4.0" step="0.01" value="${m.dose}" oninput="activeMolecules[${i}].dose=parseFloat(this.value); updateVisuals();">
-                        </div>
+                        <div><span class="designer-label">Concentration <span>${m.dose.toFixed(2)} mg/L</span></span><input type="range" min="0" max="4.0" step="0.01" value="${m.dose}" oninput="activeMolecules[${i}].dose=parseFloat(this.value); updateVisuals();"></div>
                         <div class="grid grid-cols-2 gap-4">
                             <div><span class="designer-label">Affinity <span>${m.affinity.toFixed(1)} nM</span></span><input type="range" min="0.1" max="10.0" step="0.1" value="${m.affinity}" oninput="activeMolecules[${i}].affinity=parseFloat(this.value); updateVisuals();"></div>
                             <div><span class="designer-label">Spec. <span>${m.specificity.toFixed(0)} %</span></span><input type="range" min="50" max="100" step="1" value="${m.specificity}" oninput="activeMolecules[${i}].specificity=parseFloat(this.value); updateVisuals();"></div>
@@ -339,66 +334,52 @@
         }
 
         function optimizeDosage() {
-            let base = diseaseBase[currentDisease];
-            activeMolecules = [];
-            
+            let base = diseaseBase[currentDisease]; activeMolecules = [];
             if (currentDisease !== 'healthy') {
-                let markers = Object.entries(base)
-                    .filter(([key]) => key !== 'Ach') 
-                    .sort((a, b) => b[1] - a[1]);
-
+                let markers = Object.entries(base).filter(([key]) => key !== 'Ach').sort((a, b) => b[1] - a[1]);
                 const symbols = ["Ligand-α", "Redox-β", "Gamma-γ", "Delta-δ", "Epsilon-ε", "Zeta-ζ", "Omega-ω"];
-
                 markers.forEach(([target, val], index) => {
-                    if (val > 0.2) {
-                        activeMolecules.push({
-                            name: symbols[index] || `Ligand-${index}`,
-                            target: target,
-                            mechanism: "inhibit",
-                            dose: Math.min(0.5, val * 0.5),
-                            affinity: 0.3 + (index * 0.1),
-                            specificity: 98 - index,
-                            halfLife: 24 - (index * 2)
-                        });
-                    }
+                    if (val > 0.2) activeMolecules.push({ name: symbols[index] || `Ligand-${index}`, target: target, mechanism: "inhibit", dose: Math.min(0.5, val * 0.5), affinity: 0.3 + (index * 0.1), specificity: 98 - index, halfLife: 24 - (index * 2) });
                 });
-
-                if (base.Ach < 0.4) {
-                    activeMolecules.push({ name: "Cogni-Boost", target: "Ach", mechanism: "activate", dose: 0.20, affinity: 1.2, specificity: 88, halfLife: 8 });
-                }
+                if (base.Ach < 0.4) activeMolecules.push({ name: "Cogni-Boost", target: "Ach", mechanism: "activate", dose: 0.20, affinity: 1.2, specificity: 88, halfLife: 8 });
             }
-            
-            renderRack();
-            updateVisuals();
-            logToTerminal(`Optimization: Multi-target protocol finalized for ${currentDisease.toUpperCase()}.`);
+            renderRack(); updateVisuals(); logToTerminal(`Optimization: Protocol finalized for ${currentDisease.toUpperCase()}.`);
         }
 
         function runTrial() {
             document.getElementById('trialModal').style.display = 'flex';
-            const results = Array.from({length: 100}, () => runSingleSim(18 + Math.random()*75, 40 + Math.random()*110, Math.random()>0.5?'male':'female'));
-            document.getElementById('successRate').innerText = (results.reduce((a,b)=>a+b.survival,0)).toFixed(1) + '%';
-            document.getElementById('meanTox').innerText = (results.reduce((a,b)=>a+b.toxicity,0)/100).toFixed(3);
+            trialResults = Array.from({length: 100}, () => runSingleSim(18 + Math.random()*75, 40 + Math.random()*110, Math.random()>0.5?'male':'female'));
+            document.getElementById('successRate').innerText = (trialResults.reduce((a,b)=>a+b.survival,0)).toFixed(1) + '%';
+            document.getElementById('meanTox').innerText = (trialResults.reduce((a,b)=>a+b.toxicity,0)/100).toFixed(3);
+            document.getElementById('metLoad').innerText = (trialResults.reduce((a,b)=>a+b.reserve,0)/100).toFixed(2);
             if(!trialChart) {
                 const tCtx = document.getElementById('trialChart').getContext('2d');
-                trialChart = new Chart(tCtx, { type:'bar', data: { labels: results.map((_,i)=>i), datasets: [{ data: results.map(r=>r.survival), backgroundColor: '#10b981' }] }, options: { maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
-            } else { trialChart.data.datasets[0].data = results.map(r=>r.survival); trialChart.update(); }
+                trialChart = new Chart(tCtx, { type:'bar', data: { labels: trialResults.map((_,i)=>i), datasets: [{ data: trialResults.map(r=>r.survival), backgroundColor: '#10b981' }] }, options: { maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
+            } else { trialChart.data.datasets[0].data = trialResults.map(r=>r.survival); trialChart.update(); }
+        }
+
+        function exportData(format) {
+            let content = "";
+            if (format === 'csv') {
+                content = "PatientID,Age,Sex,Survival,Toxicity,RenalReserve\n" + trialResults.map((r,i) => `${i},${r.age.toFixed(0)},${r.sex},${r.survival.toFixed(4)},${r.toxicity.toFixed(4)},${r.reserve.toFixed(4)}`).join("\n");
+            } else {
+                content = JSON.stringify(trialResults, null, 2);
+            }
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `SynaptoCAD_Trial_${new Date().getTime()}.${format}`; a.click();
         }
 
         function closeTrial() { document.getElementById('trialModal').style.display = 'none'; }
-        function addNewMolecule() { 
-            activeMolecules.push({ name: "Ligand-α", target: "TNFa", mechanism: "inhibit", dose: 0.25, affinity: 1.0, specificity: 90, halfLife: 12 }); 
-            renderRack(); 
-        }
+        function addNewMolecule() { activeMolecules.push({ name: "Ligand-α", target: "TNFa", mechanism: "inhibit", dose: 0.25, affinity: 1.0, specificity: 90, halfLife: 12 }); renderRack(); }
 
         const hCtx = document.getElementById('phenotypeChart').getContext('2d');
         mainHistoryChart = new Chart(hCtx, { type:'line', data:{ labels:Array(50).fill(''), datasets:[{ data:Array(50).fill(1), borderColor:'#10b981', tension:0.1, pointRadius:0, borderWidth:2 }] }, options:{ maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{min:0, max:1}} } });
         
         setInterval(() => {
             let metFactor = (1 / 180) * (patient.age / 45) * (75 / patient.weight);
-            activeMolecules.forEach(mol => {
-                mol.dose *= Math.pow(0.5, metFactor / mol.halfLife);
-                if (mol.dose < 0.005) mol.dose = 0;
-            });
+            activeMolecules.forEach(mol => { mol.dose *= Math.pow(0.5, metFactor / mol.halfLife); if (mol.dose < 0.005) mol.dose = 0; });
             updateVisuals();
         }, 800);
 

@@ -321,24 +321,36 @@
         }
 
         function optimizeDosage() {
-            let resIndex = (patient.weight / 75) * (1.3 - (patient.age / 100));
             let base = diseaseBase[currentDisease];
             activeMolecules = [];
             
             if (currentDisease !== 'healthy') {
-                if (base.TNFa > 0.4) {
-                    activeMolecules.push({ name: "Ligand-α", target: "TNFa", mechanism: "inhibit", dose: Math.min(0.4, base.TNFa * 0.5), affinity: 0.4, specificity: 98, halfLife: 24 });
+                // Fix: Sort disease markers to find the primary driver
+                let markers = Object.entries(base)
+                    .filter(([key]) => key !== 'Ach') // Ach is usually a deficit, not a toxic driver
+                    .sort((a, b) => b[1] - a[1]);
+
+                // 1. Target the Primary Pathology Driver (First recommendation)
+                const [primaryTarget, primaryValue] = markers[0];
+                let primaryName = primaryTarget.charAt(0).toUpperCase() + primaryTarget.slice(1) + "-Block";
+                activeMolecules.push({ name: primaryName, target: primaryTarget, mechanism: "inhibit", dose: Math.min(0.5, primaryValue * 0.6), affinity: 0.3, specificity: 98, halfLife: 24 });
+
+                // 2. Target the Secondary Pathology Driver
+                const [secondaryTarget, secondaryValue] = markers[1];
+                if (secondaryValue > 0.3) {
+                    let secondaryName = secondaryTarget.charAt(0).toUpperCase() + secondaryTarget.slice(1) + "-Mod";
+                    activeMolecules.push({ name: secondaryName, target: secondaryTarget, mechanism: "inhibit", dose: Math.min(0.4, secondaryValue * 0.4), affinity: 0.5, specificity: 95, halfLife: 12 });
                 }
-                if (base.ROS > 0.4) {
-                    activeMolecules.push({ name: "Redox-β", target: "ROS", mechanism: "inhibit", dose: Math.min(0.3, base.ROS * 0.4), affinity: 0.6, specificity: 95, halfLife: 12 });
-                }
-                if (base.Glu > 0.7) {
-                    activeMolecules.push({ name: "Synapto-γ", target: "Glu", mechanism: "inhibit", dose: 0.25, affinity: 1.0, specificity: 90, halfLife: 8 });
+
+                // 3. Address Acetylcholine deficit specifically for neuro-cognition if low
+                if (base.Ach < 0.4) {
+                    activeMolecules.push({ name: "Cogni-Boost", target: "Ach", mechanism: "activate", dose: 0.20, affinity: 1.2, specificity: 88, halfLife: 8 });
                 }
             }
+            
             renderRack();
             updateVisuals();
-            logToTerminal(`Optimization: Therapeutic Window mapped for ${currentDisease.toUpperCase()}.`);
+            logToTerminal(`Optimization: Targeted pathology protocol for ${currentDisease.toUpperCase()}.`);
         }
 
         function runTrial() {

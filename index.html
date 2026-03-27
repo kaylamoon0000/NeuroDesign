@@ -21,6 +21,8 @@
         .toggle-slider { position: absolute; top: 2px; left: 2px; width: 28px; height: 18px; background: #3b82f6; border-radius: 10px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: white; }
         .toggle-container.female { border-color: #60a5fa; }
         .toggle-container.female .toggle-slider { left: 32px; background: #60a5fa; }
+        @keyframes alert-pulse { 0%, 100% { opacity: 1; color: #ef4444; } 50% { opacity: 0.3; color: #f97316; } }
+        .toxic-alert { animation: alert-pulse 0.8s infinite; font-weight: 900; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans overflow-x-hidden">
@@ -87,7 +89,10 @@
         <div class="col-span-12 lg:col-span-4 h-full">
             <div class="bg-slate-900/50 p-5 rounded-3xl border border-slate-800 shadow-2xl h-full flex flex-col">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Molecular Design</h2>
+                    <div class="flex flex-col">
+                        <h2 id="designHeader" class="text-xs font-black text-slate-400 uppercase tracking-widest italic">Molecular Design</h2>
+                        <span id="toxWarning" class="text-[8px] hidden uppercase tracking-widest">Critical Toxicity Warning</span>
+                    </div>
                     <div class="flex gap-2">
                         <button onclick="optimizeDosage()" class="text-[9px] bg-emerald-600/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 hover:bg-emerald-600 hover:text-white transition font-bold uppercase">Optimize</button>
                         <button onclick="addNewMolecule()" class="text-[9px] bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 hover:bg-blue-600 hover:text-white transition font-bold uppercase">+ Add</button>
@@ -280,6 +285,19 @@
             document.getElementById('bioVal').innerText = (res.reserve * 100).toFixed(0) + '%';
             document.getElementById('metVal').innerText = (1 + (patient.age / 110)).toFixed(1) + 'x';
 
+            // Toxicity Alert Logic
+            const alertEl = document.getElementById('toxWarning');
+            const headerEl = document.getElementById('designHeader');
+            if (res.toxicity > res.threshold * 0.7) {
+                alertEl.classList.remove('hidden');
+                alertEl.classList.add('toxic-alert');
+                headerEl.classList.add('hidden');
+            } else {
+                alertEl.classList.add('hidden');
+                alertEl.classList.remove('toxic-alert');
+                headerEl.classList.remove('hidden');
+            }
+
             if(mainHistoryChart) {
                 mainHistoryChart.data.datasets[0].data.push(res.survival);
                 if(mainHistoryChart.data.datasets[0].data.length > 50) mainHistoryChart.data.datasets[0].data.shift();
@@ -329,13 +347,12 @@
                     .filter(([key]) => key !== 'Ach') 
                     .sort((a, b) => b[1] - a[1]);
 
-                const names = ["Ligand-α", "Redox-β", "Gamma-L", "Delta-Σ", "Epsilon-X", "Zeta-Ω"];
+                const symbols = ["Ligand-α", "Redox-β", "Gamma-γ", "Delta-δ", "Epsilon-ε", "Zeta-ζ", "Omega-ω"];
 
                 markers.forEach(([target, val], index) => {
-                    // Optimized: scan ALL markers and address everything significantly elevated
                     if (val > 0.2) {
                         activeMolecules.push({
-                            name: names[index] || `Ligand-${index}`,
+                            name: symbols[index] || `Ligand-${index}`,
                             target: target,
                             mechanism: "inhibit",
                             dose: Math.min(0.5, val * 0.5),
@@ -346,7 +363,6 @@
                     }
                 });
 
-                // Address specific Acetylcholine deficit
                 if (base.Ach < 0.4) {
                     activeMolecules.push({ name: "Cogni-Boost", target: "Ach", mechanism: "activate", dose: 0.20, affinity: 1.2, specificity: 88, halfLife: 8 });
                 }
@@ -354,7 +370,7 @@
             
             renderRack();
             updateVisuals();
-            logToTerminal(`Optimization: Comprehensive multi-target protocol finalized for ${currentDisease.toUpperCase()}.`);
+            logToTerminal(`Optimization: Multi-target protocol finalized for ${currentDisease.toUpperCase()}.`);
         }
 
         function runTrial() {
@@ -370,7 +386,7 @@
 
         function closeTrial() { document.getElementById('trialModal').style.display = 'none'; }
         function addNewMolecule() { 
-            activeMolecules.push({ name: "Alpha-Ligand", target: "TNFa", mechanism: "inhibit", dose: 0.25, affinity: 1.0, specificity: 90, halfLife: 12 }); 
+            activeMolecules.push({ name: "Ligand-α", target: "TNFa", mechanism: "inhibit", dose: 0.25, affinity: 1.0, specificity: 90, halfLife: 12 }); 
             renderRack(); 
         }
 

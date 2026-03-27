@@ -160,13 +160,34 @@
 
     <script>
         const MOA_DATABASE = {
-            TNFa: { inhibit: { summary: "Abates pro-inflammatory storm.", hl: 0.99 }, activate: { summary: "Drives acute neuroinflammation.", hl: 0.98 } },
-            BDNF: { activate: { summary: "Promotes synaptogenesis.", hl: 0.995 }, inhibit: { summary: "Impairs repair.", hl: 0.99 } },
-            Abeta: { inhibit: { summary: "Slows plaque accumulation.", hl: 0.999 }, activate: { summary: "Models proteopathic amyloidosis.", hl: 0.999 } },
-            Glu: { inhibit: { summary: "Modulates excitotoxicity.", hl: 0.98 }, activate: { summary: "Enhances excitatory signals.", hl: 0.97 } },
-            Tau: { inhibit: { summary: "Inhibits NFT formation.", hl: 0.995 }, activate: { summary: "Accelerates structural failure.", hl: 0.99 } },
-            Ach: { activate: { summary: "Strengthens memory circuitry.", hl: 0.985 }, inhibit: { summary: "Attenuates cholinergic signals.", hl: 0.98 } },
-            ROS: { inhibit: { summary: "Reduces oxidative stress.", hl: 0.97 }, activate: { summary: "Forces oxidative damage.", hl: 0.96 } }
+            TNFa: { 
+                inhibit: { summary: "Downregulates NF-κB signaling pathways to mitigate cytokine-mediated glial neuroinflammation.", hl: 0.99 }, 
+                activate: { summary: "Systemic induction of the pro-inflammatory secretome, driving microglial hyper-activation.", hl: 0.98 } 
+            },
+            BDNF: { 
+                activate: { summary: "Potentiates TrkB receptor dimerization to enhance LTP and structural synaptic plasticity.", hl: 0.995 }, 
+                inhibit: { summary: "Suppresses neurotrophic support, leading to dendritic spine retraction and impaired repair.", hl: 0.99 } 
+            },
+            Abeta: { 
+                inhibit: { summary: "Modulates BACE1 activity to prevent the proteolytic cleavage of APP into neurotoxic oligomers.", hl: 0.999 }, 
+                activate: { summary: "Catalyzes the extracellular nucleation of proteopathic fibrils, inducing amyloidogenic stress.", hl: 0.999 } 
+            },
+            Glu: { 
+                inhibit: { summary: "Antagonizes NMDA/AMPA receptors to stabilize ionic flux and prevent calcium-induced excitotoxicity.", hl: 0.98 }, 
+                activate: { summary: "Upregulates glutamatergic neurotransmission, increasing the probability of neuronal depolarization.", hl: 0.97 } 
+            },
+            Tau: { 
+                inhibit: { summary: "Attenuates hyperphosphorylation of microtubule-associated proteins to prevent neurofibrillary tangles.", hl: 0.995 }, 
+                activate: { summary: "Promotes the intracellular aggregation of paired helical filaments, destabilizing the cytoskeleton.", hl: 0.99 } 
+            },
+            Ach: { 
+                activate: { summary: "Inhibits acetylcholinesterase to increase synaptic dwell-time and enhance cholinergic tone.", hl: 0.985 }, 
+                inhibit: { summary: "Competitively blocks muscarinic/nicotinic receptors, inducing acute cognitive attenuation.", hl: 0.98 } 
+            },
+            ROS: { 
+                inhibit: { summary: "Scavenges reactive oxygen species to preserve mitochondrial membrane potential and lipid integrity.", hl: 0.97 }, 
+                activate: { summary: "Forces oxidative phosphorylation uncoupling, resulting in catastrophic lipid peroxidation.", hl: 0.96 } 
+            }
         };
 
         const diseaseBase = {
@@ -241,18 +262,20 @@
             document.getElementById('node-Survival').querySelector('.val').innerText = (res.Survival * 100).toFixed(0) + '%';
             document.getElementById('toxVal').innerText = res.Toxicity.toFixed(3);
             
+            const color = (v) => v > 0.6 ? '#ef4444' : (v > 0.3 ? '#f59e0b' : '#10b981');
+
             if (res.Toxicity > threshold) {
                 document.getElementById('heat-bst').classList.add('tox-warning');
+                document.getElementById('heat-bst').style.backgroundColor = '#ef4444'; // Force red on breach
                 if (!toxAlertActive) { logToTerminal("CRITICAL: PK THRESHOLD BREACHED", true); toxAlertActive = true; }
             } else {
                 document.getElementById('heat-bst').classList.remove('tox-warning');
+                document.getElementById('heat-bst').style.backgroundColor = color(res.ROS); // Revert to healthy/stress color based on biology
                 toxAlertActive = false;
             }
 
-            const color = (v) => v > 0.6 ? '#ef4444' : (v > 0.3 ? '#f59e0b' : '#10b981');
             document.getElementById('heat-pfc').style.backgroundColor = color(res.Abeta + res.TNFa);
             document.getElementById('heat-hip').style.backgroundColor = color(1 - res.Survival);
-            if (!toxAlertActive) document.getElementById('heat-bst').style.backgroundColor = color(res.ROS);
 
             if(mainHistoryChart) {
                 mainHistoryChart.data.datasets[0].data.push(res.Survival);
